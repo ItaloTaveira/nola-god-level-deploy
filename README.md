@@ -10,6 +10,38 @@
 └─ PROBLEMA.md             # Descrição do problema e regras de negócio
 ```
 
+## Get started — clonar e executar (rápido)
+
+Siga estes passos para que outra pessoa clone o seu repositório e rode a aplicação localmente (assume macOS/Linux com Docker instalado).
+
+```bash
+# 1) Clone o repositório
+git clone https://github.com/ItaloTaveira/nola-god-level-deploy.git
+cd nola-god-level-deploy
+
+# 2) Build da imagem do gerador de dados (garante dependências atualizadas)
+docker compose build --no-cache data-generator
+
+# 3) Subir Postgres (background) e aguardar readiness
+docker compose up -d postgres
+docker compose logs -f postgres   # aguarde "ready to accept connections"
+
+# 4) Executar o gerador (gerará ~500k vendas — leva alguns minutos)
+docker compose run --rm data-generator
+
+# 5) Build e start do backend
+docker compose build --no-cache backend
+docker compose up -d backend
+
+# 6) Teste rápido da API
+curl http://localhost:8000/api/v1/health
+```
+
+Observações rápidas:
+
+- Se não quiser buildar localmente, podemos publicar imagens em um registry público (Docker Hub/GHCR) para permitir `docker pull` — me avise se quiser isso.
+- Se você não tiver `docker compose` instalado, veja a seção "Alternativa sem Compose" mais abaixo no README para comandos equivalentes usando apenas `docker`.
+
 - `frontend/` — SPA React + Vite (dev com Vite). Possui script de build (`npm run build`).
 - `docker-compose.yml` — orquestra serviços para desenvolvimento (Postgres, backend, ferramentas de suporte).
 - `generate_data.py` + `Dockerfile` (root) — script/container para popular a base de dados (usado no perfil `tools`).
