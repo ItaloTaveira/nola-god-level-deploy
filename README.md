@@ -1,19 +1,18 @@
 # Nola God Level — Projeto
 
-README completo para desenvolvimento, build e deploy desta aplicação (backend + frontend) e uso com Docker / DigitalOcean.
+```
+./
+├─ backend/                # API Node.js
+├─ frontend/               # App React + Vite
+├─ docker-compose.yml      # Compose para desenvolvimento
+├─ Dockerfile              # container para geração de dados (generate_data.py)
+├─ generate_data.py        # script para popular o banco
+└─ PROBLEMA.md             # Descrição do problema e regras de negócio
+```
 
----
-
-## Visão geral
-
-Este repositório contém uma aplicação fullstack composta por:
-
-- `backend/` — API Node.js (Express/Node) (porta 8000 no dev). Possui `Dockerfile`.
 - `frontend/` — SPA React + Vite (dev com Vite). Possui script de build (`npm run build`).
 - `docker-compose.yml` — orquestra serviços para desenvolvimento (Postgres, backend, ferramentas de suporte).
-- `docker-compose.prod.yml` — compose preparado para produção (usa imagens do registry DigitalOcean).
 - `generate_data.py` + `Dockerfile` (root) — script/container para popular a base de dados (usado no perfil `tools`).
-- `.github/workflows/publish.yml` — workflow que builda e envia imagens para o DigitalOcean Container Registry (DOCR).
 
 ---
 
@@ -23,7 +22,7 @@ Este repositório contém uma aplicação fullstack composta por:
 - Node.js (v18/20 recomendado) e npm
 - Python 3.11 (para o script `generate_data.py` se for rodar localmente)
 - Docker e Docker Compose (para executar containers)
-- (Opcional) `doctl` e `gh` para facilitar operações com DigitalOcean e GitHub
+- (Opcional) `gh` para facilitar operações com GitHub
 
 ---
 
@@ -34,10 +33,9 @@ Este repositório contém uma aplicação fullstack composta por:
 ├─ backend/                # API Node.js
 ├─ frontend/               # App React + Vite
 ├─ docker-compose.yml      # Compose para desenvolvimento
-├─ docker-compose.prod.yml # Compose para produção (usa imagens do registry)
 ├─ Dockerfile              # container para geração de dados (generate_data.py)
 ├─ generate_data.py        # script para popular o banco
-└─ .github/workflows/...    # CI: build/push para DOCR
+└─ PROBLEMA.md             # Descrição do problema e regras de negócio
 ```
 
 ---
@@ -48,7 +46,7 @@ Este repositório contém uma aplicação fullstack composta por:
 
 Este repositório contém uma solução minimalista e prática para analytics de restaurantes — backend em Node.js (Express) e frontend em React (Vite). O foco é permitir consultas analíticas rápidas e customizáveis para proprietários (como a persona "Maria") tomarem decisões operacionais e comerciais.
 
-Este README foi reescrito para oferecer uma visão profissional, explicitar as regras de negócio suportadas, descrever a API disponível, explicar como rodar localmente e como fazer deploy na DigitalOcean.
+Este README foi reescrito para oferecer uma visão profissional, explicitar as regras de negócio suportadas, descrever a API disponível e explicar como rodar localmente.
 
 ---
 
@@ -59,7 +57,7 @@ Este README foi reescrito para oferecer uma visão profissional, explicitar as r
 - Arquitetura e estrutura do repositório
 - API (endpoints, parâmetros e exemplos)
 - Como rodar localmente (dev + docker)
-- Build, CI e deploy (DigitalOcean)
+- Build, CI e deploy (removido)
 - Operação e troubleshooting
 
 ---
@@ -103,8 +101,6 @@ Requisitos obrigatórios do desafio: o banco de dados é PostgreSQL (fornecido) 
 ├─ backend/                # API Node.js (src/controllers, src/services, src/repositories)
 ├─ frontend/               # App React + Vite
 ├─ docker-compose.yml      # Para desenvolvimento local
-├─ docker-compose.prod.yml # Para produção (usa imagens no registry)
-├─ .github/workflows       # CI que builda e envia imagens para DOCR
 ├─ generate_data.py        # Script para popular DB (containerizável)
 └─ PROBLEMA.md             # Descrição do problema e regras de negócio
 ```
@@ -306,12 +302,9 @@ Adicionei validações de entrada no layer de rota (express-validator) para evit
 
 ---
 
-## CI / CD e DigitalOcean (resumo)
+## Observação sobre deploy em cloud
 
-- O workflow em `.github/workflows/publish.yml` builda imagens do `backend` e `frontend` e envia para o registry DigitalOcean `registry.digitalocean.com/nolagodlevel` (use secrets `DO_API_TOKEN` e `DOCR_NAME`).
-- Após as imagens existirem no registry, você pode:
-  - Usar App Platform apontando para cada imagem (componentes independentes); ou
-  - Puxar as imagens em um Droplet e rodar `docker compose -f docker-compose.prod.yml up -d`.
+As instruções de CI/CD e deploy para provedores de cloud foram removidas deste repositório — o foco atual é execução e desenvolvimento local com Docker Compose. Se desejar reativar um fluxo de publicação ou integrar um registry, posso ajudá-lo a recriar os artefatos de CI/CD.
 
 ---
 
@@ -335,7 +328,6 @@ Adicionei validações de entrada no layer de rota (express-validator) para evit
 
 ## Próximos passos que eu posso fazer por você
 
-- Subir o repo para o GitHub (se autorizar, posso executar os comandos locais aqui).
-- Preencher `DOCR_NAME` no workflow e commitar (se preferir não usar secret para o nome).
-- Criar script `deploy-droplet.sh` para facilitar deploy no Droplet.  
-  Se quiser que eu gere exemplos reais de responses e um guia de integração para o frontend, eu posso executar requests locais e inserir amostras no README.
+-- Subir o repo para o GitHub (se autorizar, posso executar os comandos locais aqui).
+-- Criar script `deploy-droplet.sh` para facilitar um futuro deploy (opcional).
+Se quiser que eu gere exemplos reais de responses e um guia de integração para o frontend, eu posso executar requests locais e inserir amostras no README.
