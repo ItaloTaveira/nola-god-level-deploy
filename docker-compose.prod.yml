@@ -1,33 +1,3 @@
-version: '3.8'
-
-services:
-  postgres:
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_DB: ${DB_NAME:-challenge_db}
-      POSTGRES_USER: ${DB_USER:-challenge}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-challenge_2024}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  backend:
-    # Imagem apontando para seu registry DigitalOcean
-    image: registry.digitalocean.com/nolagodlevel/backend:latest
-    restart: always
-    env_file: .env
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-
-  # If you publish a frontend image, uncomment and replace the image name
-  # frontend:
-  #   image: registry.digitalocean.com/nolagodlevel/frontend:latest
-  #   restart: always
-  #   ports:
-  #     - "80:80"
-
-volumes:
-  postgres_data:
-    driver: local
+## docker-compose.prod.yml neutralized per maintainer request.
+# The production compose that referenced DigitalOcean images was removed.
+# Recreate a production compose if/when you are ready to target a registry.

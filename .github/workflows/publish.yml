@@ -1,4 +1,4 @@
-name: Build and push images to DigitalOcean Container Registry
+"# Removed: workflow that published to DigitalOcean per maintainer request.\n# This file was neutralized to avoid any DigitalOcean-related CI runs."
 
 on:
   push:

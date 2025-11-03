@@ -1,17 +1,6 @@
 #!/usr/bin/env zsh
-# Simple helper to build & push the frontend image to DigitalOcean Container Registry
-set -euo pipefail
+# Removed: helper to push frontend to DigitalOcean registry
+# File neutralized per maintainers request. If you need similar functionality,
+# re-create a push script pointing to your registry and ensure credentials are managed securely.
 
-# Registry name (ex: nolagodlevel). You can export DOCR_NAME env var or use default below.
-DOCR_NAME=${DOCR_NAME:-nolagodlevel}
-REGISTRY_HOST=${REGISTRY_HOST:-registry.digitalocean.com}
-
-IMAGE_REF="$REGISTRY_HOST/$DOCR_NAME/frontend:latest"
-
-echo "Building frontend image: $IMAGE_REF"
-docker build -t "$IMAGE_REF" -f frontend/Dockerfile ./frontend
-
-echo "Pushing $IMAGE_REF"
-docker push "$IMAGE_REF"
-
-echo "Done. Verify with: doctl registry repository list-tags frontend"
+echo "This script has been disabled."

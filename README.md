@@ -15,8 +15,6 @@ Este repositório contém uma aplicação fullstack composta por:
 - `generate_data.py` + `Dockerfile` (root) — script/container para popular a base de dados (usado no perfil `tools`).
 - `.github/workflows/publish.yml` — workflow que builda e envia imagens para o DigitalOcean Container Registry (DOCR).
 
-O objetivo deste README é centralizar o que você precisa para rodar localmente e para fazer deploy na DigitalOcean.
-
 ---
 
 ## Requisitos locais
@@ -190,34 +188,108 @@ curl "http://localhost:8000/api/v1/metrics/top-products?start=2025-01-01&end=202
 
 1. Prerequisitos
 
-- Docker & Docker Compose instalado
-- Node.js (para rodar apenas o backend localmente) e npm
+- Docker & Docker Compose (v2+) instalado
+- Git
+- Node.js + npm (opcional: para rodar o backend local sem Docker)
+- Python 3.11 (opcional: apenas se rodar `generate_data.py` localmente em vez do container)
 
-2. Rodar com Docker Compose (recomendado)
+2. Quick Start (Docker Compose) — gerar dados e subir serviços
+
+Esta seção mostra um fluxo passo-a-passo para construir as imagens necessárias, subir o Postgres, gerar ~500k vendas com o `data-generator` e, por fim, subir o backend.
+
+Execute os comandos abaixo a partir da raiz do repositório.
+
+Passo 0 — (opcional) parar e limpar estado antigo
 
 ```bash
-# Na raiz do projeto
-docker compose up --build
-
-# Para rodar o gerador de dados (perfil tools)
-docker compose --profile tools up --build
+# remove containers e volumes antigos (não apaga imagens)
+docker compose down -v
 ```
 
-3. Rodar apenas backend (dev)
+Passo 1 — build da imagem do gerador de dados (garante dependências atualizadas)
+
+```bash
+docker compose build --no-cache data-generator
+```
+
+Passo 2 — subir apenas o Postgres (em background)
+
+```bash
+docker compose up -d postgres
+docker compose logs -f postgres   # aguarde a mensagem "ready to accept connections"
+```
+
+Passo 3 — executar o gerador de dados (leva alguns minutos: 5–15m)
+
+```bash
+docker compose run --rm data-generator
+```
+
+Observações:
+
+- Se durante a execução do `data-generator` ocorrer erro do tipo "ModuleNotFoundError: No module named 'faker'", rode novamente o passo 1 (rebuild) — o repositório já foi atualizado para incluir `Faker` nas dependências.
+- Se desejar rodar o gerador em background via compose com outras ferramentas (pgadmin), use o perfil `tools`:
+
+```bash
+docker compose --profile tools up -d pgadmin
+```
+
+Passo 4 — verificar quantos registros foram inseridos
+
+```bash
+docker compose exec postgres psql -U challenge challenge_db -c 'SELECT COUNT(*) FROM sales;'
+# Deve retornar algo em torno de 500000
+```
+
+3. Subir o backend (Docker Compose)
+
+Depois que o banco estiver populado e saudável, construa e inicie o backend:
+
+```bash
+docker compose build --no-cache backend
+docker compose up -d backend
+
+# acompanhar logs do backend
+docker compose logs -f backend
+
+# testar health endpoint
+curl http://localhost:8000/api/v1/health
+```
+
+Se preferir ver a saída em foreground (útil para desenvolvimento), execute:
+
+```bash
+docker compose up --build backend
+```
+
+Notas de troubleshooting rápidas
+
+- Aviso "the attribute `version` is obsolete": é apenas um aviso sobre a chave `version:` no `docker-compose.yml`; não impede a execução. Posso remover a chave se quiser.
+- Conflito de nome de container (ex.: `/godlevel-db` ou `/godlevel-backend`): remova containers antigos com:
+
+```bash
+docker ps -a --filter "name=godlevel-" --format '{{.Names}}' | xargs -r docker rm -f
+```
+
+- Se o backend reclamar de variável de ambiente faltando, confira as variáveis definidas em `docker-compose.yml` para o serviço `backend`: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `PORT`.
+- Se a porta 8000 já estiver em uso no host, verifique com `lsof -iTCP:8000 -sTCP:LISTEN -n -P`.
+
+4. Rodar backend localmente (sem Docker)
+
+Se preferir desenvolver sem Docker para o backend:
 
 ```bash
 cd backend
 npm install
-npm run start
-```
-
-4. Rodar frontend (dev)
-
-```bash
-cd frontend
-npm install
+# criar .env (ou copiar .env.example) com credenciais do Postgres
 npm run dev
 ```
+
+Lembre-se de apontar `DB_HOST` corretamente (se o Postgres estiver rodando em container, `DB_HOST=localhost` e `DB_PORT=5432` funcionam porque a porta é mapeada; se backend também estiver em container na mesma rede, `DB_HOST=postgres`).
+
+---
+
+Se quiser, eu posso também extrair dependências do gerador para um `requirements-generator.txt` separado e atualizar o `Dockerfile` para instalar apenas o que o gerador precisa — isso deixa o `backend` e o `data-generator` com dependências separadas.
 
 ---
 
