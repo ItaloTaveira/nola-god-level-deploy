@@ -5,23 +5,42 @@ const { Pool } = require('pg');
 // 2) Individual DB_* variables for local/docker-compose setups
 let pool;
 
-if (process.env.DATABASE_URL) {
-  // When running in managed environments the connection often requires SSL.
-  // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
-  // If you want stricter validation, provide a proper CA and remove this option.
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-} else {
-  pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
-    user: process.env.DB_USER || 'challenge',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'challenge_db'
+// Create a Pool defensively. Some environments provide a DATABASE_URL that
+// may be malformed or require special handling; wrap in try/catch and fall
+// back to individual env vars when needed.
+function createPool() {
+  if (process.env.DATABASE_URL) {
+    try {
+      // When running in managed environments the connection often requires SSL.
+      // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
+      // If you want stricter validation, provide a proper CA and remove this option.
+      pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+    } catch (err) {
+      console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err);
+      pool = undefined;
+    }
+  }
+
+  if (!pool) {
+    pool = new Pool({
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
+      user: process.env.DB_USER || 'challenge',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'challenge_db'
+    });
+  }
+
+  // Run a quick connection test and log detailed errors if it fails.
+  pool.query('SELECT 1').catch((err) => {
+    console.error('Initial DB connection test failed:', err && err.stack ? err.stack : err);
   });
 }
+
+createPool();
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
