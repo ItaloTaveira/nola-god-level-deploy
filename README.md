@@ -46,17 +46,172 @@ O objetivo deste README é centralizar o que você precisa para rodar localmente
 
 ## Como rodar localmente (desenvolvimento)
 
-Pré-requisitos: instale dependências do backend e frontend se quiser rodar fora do Docker.
+# Nola — Plataforma de Analytics para Restaurantes
 
-Backend (local sem Docker):
+Este repositório contém uma solução minimalista e prática para analytics de restaurantes — backend em Node.js (Express) e frontend em React (Vite). O foco é permitir consultas analíticas rápidas e customizáveis para proprietários (como a persona "Maria") tomarem decisões operacionais e comerciais.
+
+Este README foi reescrito para oferecer uma visão profissional, explicitar as regras de negócio suportadas, descrever a API disponível, explicar como rodar localmente e como fazer deploy na DigitalOcean.
+
+---
+
+## Sumário
+
+- Visão geral e objetivo
+- Regras de negócio e casos de uso
+- Arquitetura e estrutura do repositório
+- API (endpoints, parâmetros e exemplos)
+- Como rodar localmente (dev + docker)
+- Build, CI e deploy (DigitalOcean)
+- Operação e troubleshooting
+
+---
+
+## Visão geral e objetivo
+
+Objetivo: fornecer um backoffice de analytics específico para restaurantes que permita perguntas do tipo:
+
+- "Quais são os 10 produtos mais vendidos no delivery no mês passado?"
+- "O ticket médio caiu — é por canal ou por loja?"
+- "Quais clientes compraram 3+ vezes mas não voltam há 30 dias?"
+
+O sistema oferece endpoints analíticos (revenue, top-products, delivery-times, ticket-average, entre outros) que suportam filtros por período, canal, loja, dia da semana e faixa horária, além de funções para decomposição temporal e identificação de clientes perdidos.
+
+Requisitos obrigatórios do desafio: o banco de dados é PostgreSQL (fornecido) e deve ser usado para as consultas analíticas.
+
+---
+
+## Regras de negócio (resumidas)
+
+1. Métricas temporais: todas as consultas que aceitam intervalo (`start`, `end`) limitam o período máximo a 365 dias (limite de segurança para evitar scans longos).
+2. Agregações definidas:
+   - Receita total por período (`/metrics/revenue`).
+   - Top produtos por receita/quantidade (`/metrics/top-products`).
+   - Vendas por canal (`/metrics/sales-by-channel`).
+   - Ticket médio agrupado por `channel` ou `store` (`/metrics/ticket-average`).
+   - Tempos de entrega agregados por canal/loja (`/metrics/delivery-times`).
+   - Produtos mais vendidos em um determinado dia/horário (`/metrics/top-products-when`).
+   - Margem de produto com custo assumido (`/metrics/product-margins`).
+   - Detecção de clientes perdidos por tempo desde o último pedido e número mínimo de pedidos (`/metrics/customers-lost`).
+   - Consulta de histórico de um cliente por id ou por nome (`/metrics/customer-summary`, `/metrics/customer-summary-by-name`).
+3. Formatação amigável: alguns endpoints retornam campos formatados (ex.: valores em BRL, porcentagens) para facilitar consumo por UI.
+4. Segurança e validação: todas as entradas são validadas (datas em ISO8601, inteiros com limites) e erros retornam payloads padronizados `{ ok: false, error: "..." }`.
+
+---
+
+## Estrutura do repositório
+
+```
+./
+├─ backend/                # API Node.js (src/controllers, src/services, src/repositories)
+├─ frontend/               # App React + Vite
+├─ docker-compose.yml      # Para desenvolvimento local
+├─ docker-compose.prod.yml # Para produção (usa imagens no registry)
+├─ .github/workflows       # CI que builda e envia imagens para DOCR
+├─ generate_data.py        # Script para popular DB (containerizável)
+└─ PROBLEMA.md             # Descrição do problema e regras de negócio
+```
+
+---
+
+## API — endpoints principais
+
+Base path: `/api/v1/metrics`
+
+Observação: todas as respostas têm o formato `{ ok: true, data: ... }` em caso de sucesso.
+
+Endpoints (resumo):
+
+- GET /revenue?start=YYYY-MM-DD&end=YYYY-MM-DD
+
+  - Total de receita no período.
+
+- GET /top-products?start=&end=&limit=
+
+  - Lista dos produtos ordenados por receita; retorna `revenue`, `qty`, `revenue_fmt` (BRL) e `avg_price_fmt`.
+
+- GET /sales-by-channel?start=&end=
+
+  - Receita/volume por canal.
+
+- GET /ticket-average?group=channel|store&start=&end=
+
+  - Ticket médio agrupado por canal ou loja.
+
+- GET /delivery-times?start=&end=&channel_id=&store_id=
+
+  - Estatísticas de tempos (preparo, entrega) filtráveis por canal/loja.
+
+- GET /top-products-when?start=&end=&channel_id=&dow=&hour_start=&hour_end=&limit=
+
+  - Top produtos em dia da semana (`dow`: 0=domingo .. 6=sábado) e faixa horária.
+
+- GET /product-margins?start=&end=&limit=&assumed_cost_pct=&product_id=
+
+  - Calcula margem de produtos; `assumed_cost_pct` é o custo percentual assumido quando não há custo real.
+
+- GET /product-customers?product_id=&start=&end=&min_orders=&limit=
+
+  - Retorna clientes que compraram um produto, com filtro por número mínimo de pedidos.
+
+- GET /customer-summary?customer_id=&start=&end=&limit=
+
+  - Histórico resumido de um cliente (por id).
+
+- GET /customer-summary-by-name?name=&start=&end=&limit=
+
+  - Busca por nome (útil quando não se tem id do cliente).
+
+- GET /customer-last-order-by-name?name=
+
+  - Último pedido de um cliente por nome.
+
+- GET /customers-lost?min_orders=&since_days=&limit=&fallback=
+
+  - Identifica clientes considerados "lost" (p.ex. compraram >= `min_orders` mas não compram há `since_days`). Se `fallback=true` usa um algoritmo alternativo.
+
+- GET /channels
+
+  - Lista de canais disponíveis (iFood, Rappi, balcão, etc.).
+
+- POST /decompose { group, a_start, a_end, b_start, b_end }
+  - Decomposição de variação entre dois períodos (A vs B) agrupada por `channel` ou `store`.
+
+Para ver a definição completa de parâmetros, consulte `backend/src/routes/metrics.js`.
+
+Exemplo (curl):
+
+```bash
+curl "http://localhost:8000/api/v1/metrics/top-products?start=2025-01-01&end=2025-01-31&limit=10"
+```
+
+---
+
+## Como rodar localmente
+
+1. Prerequisitos
+
+- Docker & Docker Compose instalado
+- Node.js (para rodar apenas o backend localmente) e npm
+
+2. Rodar com Docker Compose (recomendado)
+
+```bash
+# Na raiz do projeto
+docker compose up --build
+
+# Para rodar o gerador de dados (perfil tools)
+docker compose --profile tools up --build
+```
+
+3. Rodar apenas backend (dev)
 
 ```bash
 cd backend
 npm install
-npm run start   # ou npm run dev se tiver script dev
+npm run start
 ```
 
-Frontend (dev com Vite):
+4. Rodar frontend (dev)
 
 ```bash
 cd frontend
@@ -64,126 +219,45 @@ npm install
 npm run dev
 ```
 
-Rodando tudo com Docker Compose (recomendado para replicar ambiente):
+---
+
+## Testes e qualidade
+
+O repositório contém testes simples de saúde (`test/`) e logs. Para rodar testes do backend (se existirem):
 
 ```bash
-# a partir da raiz do repo
-docker compose up --build
-
-# opcional: rodar em background
-docker compose up -d --build
-# ver logs
-docker compose logs -f
+cd backend
+npm test
 ```
 
-Observações:
-
-- O `docker-compose.yml` contém um serviço `postgres` e o `backend` usa as variáveis de ambiente padrão definidas no compose.
-- Há um serviço `data-generator` no perfil `tools` que usa o `generate_data.py`. Para rodá-lo use:
-
-```bash
-docker compose --profile tools up --build
-```
+Adicionei validações de entrada no layer de rota (express-validator) para evitar entradas inválidas.
 
 ---
 
-## Variáveis de ambiente
+## CI / CD e DigitalOcean (resumo)
 
-Há um `.env.example` no root. Para produção copie para `.env` e ajuste os valores:
-
-```bash
-cp .env.example .env
-# depois edite .env
-```
-
-Não comite `.env` com segredos.
+- O workflow em `.github/workflows/publish.yml` builda imagens do `backend` e `frontend` e envia para o registry DigitalOcean `registry.digitalocean.com/nolagodlevel` (use secrets `DO_API_TOKEN` e `DOCR_NAME`).
+- Após as imagens existirem no registry, você pode:
+  - Usar App Platform apontando para cada imagem (componentes independentes); ou
+  - Puxar as imagens em um Droplet e rodar `docker compose -f docker-compose.prod.yml up -d`.
 
 ---
 
-## Build e deploy (imagens Docker)
+## Regras operacionais e boas práticas
 
-O projeto já contém um workflow de GitHub Actions (`.github/workflows/publish.yml`) que faz build e push das imagens do `backend` e (quando houver) do `frontend` para o DigitalOcean Container Registry.
-
-Secrets necessários no GitHub (Settings → Secrets → Actions):
-
-- `DO_API_TOKEN` — token da DigitalOcean (crie em Control Panel → API → Tokens/Keys).
-- `DOCR_NAME` — nome do seu registry na DigitalOcean (ex.: `nolagodlevel`).
-
-Se preferir buildar e enviar localmente:
-
-```bash
-# autentique-se no registry (opcional via doctl)
-doctl auth init --access-token <SEU_TOKEN>
-doctl registry login
-
-# build and push (exemplo backend)
-docker build -t registry.digitalocean.com/nolagodlevel/backend:latest ./backend
-docker push registry.digitalocean.com/nolagodlevel/backend:latest
-```
-
-> Substitua `nolagodlevel` pelo nome do seu registry.
-
-### docker-compose.prod.yml
-
-Use o `docker-compose.prod.yml` para rodar imagens já publicadas no registry. Exemplo (no Droplet):
-
-```bash
-# no servidor (Droplet) autenticado no DO registry
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
-```
+- Limitar queries longas: não permita ranges maiores que 365 dias via middleware (`rangeLimit`).
+- Cache em camadas: para dashboards com alta leitura, posicione cache (Redis ou CDN) sobre endpoints pesados.
+- Banco em produção: prefira Managed Database (DO) com backups automatizados.
+- Monitoramento: exporte métricas de tempo de resposta e taxa de erros (Prometheus / Grafana ou serviço SaaS).
 
 ---
 
-## Deploy na DigitalOcean — opções
+## Próximos passos recomendados (produto)
 
-1. App Platform (gerenciado)
-
-- Vantagens: HTTPS automático, builds integrados ao GitHub, menos manutenção.
-- Escolha criar um App e apontar para as imagens no registry (ou deixar a App Platform buildar a partir do repo). Cada serviço vira um componente.
-
-2. Droplet + Docker Compose (controle)
-
-- Vantagens: controle total, mais barato para pequenas cargas.
-- Passos:
-  - Criar Droplet (Ubuntu 22.04+), adicionar SSH key.
-  - Instalar Docker e plugin compose.
-  - Copiar `docker-compose.prod.yml` para o Droplet e rodar `docker compose up -d`.
-  - Usar nginx/Traefik/Load Balancer e certbot para SSL (se não usar App Platform).
-
-Recomendações: para o banco de dados, prefira o Managed Database da DigitalOcean em produção.
-
----
-
-## CI/CD (o que já há)
-
-- Workflow `.github/workflows/publish.yml` builda e publica as imagens para o registry usando `DO_API_TOKEN` e `DOCR_NAME`.
-- Se você preferir que eu altere o workflow para inserir `nolagodlevel` direto no arquivo (em vez de usar `DOCR_NAME`), posso ajustar.
-
----
-
-## Como subir para o GitHub (passos rápidos)
-
-Exemplo via HTTPS (se ainda não fez):
-
-```bash
-git init
-git add .
-git commit -m "Initial commit — project and DO deploy files"
-git branch -M main
-git remote add origin https://github.com/YOUR_USER/nola-god-level-deploy.git
-git push -u origin main
-```
-
-Depois configure os `Secrets` no GitHub (veja acima) e o workflow de Actions rodará no push para `main`.
-
----
-
-## Troubleshooting rápido
-
-- Favicon do Vite aparecendo no dev: limpe cache ou adicione `/public/favicon.svg` e `<link rel="icon" href="/favicon.svg">` no `frontend/index.html`.
-- Se o GitHub Actions falhar: verifique Secrets, permissões do token e logs do job.
-- Se o Docker Compose falhar no servidor: rode `docker compose logs -f` e `docker compose ps` para inspecionar.
+1. Implementar autenticação básica por usuário/loja para multi-tenant futuro.
+2. Criar UI para geração de dashboards ad-hoc (salvar queries, visualizações).
+3. Adicionar endpoints de export (CSV/XLSX) para relatórios prontos.
+4. Otimizar consultas com índices (veja `backend/db_indexes.sql`).
 
 ---
 
@@ -191,10 +265,5 @@ Depois configure os `Secrets` no GitHub (veja acima) e o workflow de Actions rod
 
 - Subir o repo para o GitHub (se autorizar, posso executar os comandos locais aqui).
 - Preencher `DOCR_NAME` no workflow e commitar (se preferir não usar secret para o nome).
-- Criar script `deploy-droplet.sh` para facilitar deploy no Droplet.
-
-Se quiser que eu gere algum desses artefatos ou execute o push para o GitHub localmente, diga qual opção prefere.
-
----
-
-Obrigado — boa sorte no deploy! Se quiser, eu posso agora: (A) executar `git init` + commit e gerar comandos de push, (B) preparar script de deploy, ou (C) esperar você criar o repo e configurar Secrets e então testar a Action.
+- Criar script `deploy-droplet.sh` para facilitar deploy no Droplet.  
+  Se quiser que eu gere exemplos reais de responses e um guia de integração para o frontend, eu posso executar requests locais e inserir amostras no README.
