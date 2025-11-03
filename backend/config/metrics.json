@@ -1,0 +1,30 @@
+{
+  "metrics": [
+    {
+      "id": "revenue",
+      "name": "Faturamento",
+      "description": "Soma do total_amount de vendas completadas",
+      "sql_template": "SELECT DATE(created_at) as day, SUM(total_amount) as revenue FROM sales WHERE sale_status_desc = 'COMPLETED' AND created_at >= :start AND created_at <= :end GROUP BY DATE(created_at) ORDER BY DATE(created_at)",
+      "type": "timeseries",
+      "unit": "BRL",
+      "default_granularity": "day"
+    },
+    {
+      "id": "top_products",
+      "name": "Produtos mais vendidos",
+      "description": "Ranking de produtos por quantidade vendida",
+      "sql_template": "SELECT p.id, p.name, SUM(ps.quantity) as qty, SUM(ps.total_price) as revenue FROM product_sales ps JOIN products p ON p.id = ps.product_id JOIN sales s ON s.id = ps.sale_id WHERE s.sale_status_desc = 'COMPLETED' AND s.created_at >= :start AND s.created_at <= :end GROUP BY p.id, p.name ORDER BY qty DESC LIMIT :limit",
+      "type": "table",
+      "unit": "qty",
+      "default_limit": 10
+    },
+    {
+      "id": "sales_by_channel",
+      "name": "Vendas por canal",
+      "description": "Número de vendas e receita por canal",
+      "sql_template": "SELECT c.id, c.name, COUNT(*) as sales, SUM(s.total_amount) as revenue FROM sales s JOIN channels c ON c.id = s.channel_id WHERE s.sale_status_desc = 'COMPLETED' AND s.created_at >= :start AND s.created_at <= :end GROUP BY c.id, c.name ORDER BY sales DESC",
+      "type": "table",
+      "unit": "qty"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-10-29T00:00:00.000Z",
+  "__export_source": "nola-god-level-backend",
+  "resources": [
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "name": "Health Check",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/health",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_revenue",
+      "_type": "request",
+      "name": "Metrics - Revenue",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/metrics/revenue?start={{start}}&end={{end}}",
+      "body": {},
+      "parameters": [
+        { "name": "start", "value": "2024-01-01" },
+        { "name": "end", "value": "2024-01-31" }
+      ],
+      "headers": []
+    },
+    {
+      "_id": "req_top_products",
+      "_type": "request",
+      "name": "Metrics - Top Products",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/metrics/top-products?start={{start}}&end={{end}}&limit=10",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_sales_by_channel",
+      "_type": "request",
+      "name": "Metrics - Sales by Channel",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/metrics/sales-by-channel?start={{start}}&end={{end}}",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_catalog",
+      "_type": "request",
+      "name": "Metrics - Catalog",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/metrics/catalog",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    }
+  ]
+}

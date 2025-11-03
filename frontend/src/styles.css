@@ -1,0 +1,15 @@
+:root{}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* small helpers used by components */
+.app{@apply w-full max-w-none mx-0 mt-0 px-4}
+.card{@apply bg-white p-4 rounded-lg shadow-sm}
+.card.full{@apply w-full}
+.table{@apply w-full border-collapse}
+.table th,.table td{@apply py-2 border-b}
+
+/* dashboard card: uniform appearance and full-height support */
+.dashboard-card{@apply bg-white p-4 rounded-lg shadow-sm h-full flex flex-col}
+
