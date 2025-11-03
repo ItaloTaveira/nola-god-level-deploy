@@ -6,6 +6,7 @@ Generates realistic restaurant data based on Arcca's actual models
 
 import random
 import argparse
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import psycopg2
@@ -17,7 +18,7 @@ fake = Faker('pt_BR')
 # Configurations
 BRAND_ID = 1
 SALES_STATUS = ['COMPLETED', 'CANCELLED']
-STATUS_WEIGHTS = [0.95, 0.05]  # 95% completed
+STATUS_WEIGHTS = [0.95, 0.05]  # 95% completed  
 CATEGORIES_PRODUCTS = ['Burgers', 'Pizzas', 'Pratos', 'Combos', 'Sobremesas', 'Bebidas']
 CATEGORIES_ITEMS = ['Complementos', 'Molhos', 'Adicionais']
 
@@ -665,7 +666,7 @@ def create_indexes(conn):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate God Level Challenge data')
-    parser.add_argument('--db-url', default='postgresql://challenge:challenge@localhost:5432/challenge_db',
+    parser.add_argument('--db-url', default=os.environ.get('DATABASE_URL', 'postgresql://challenge:challenge@localhost:5432/challenge_db'),
                        help='PostgreSQL connection URL')
     parser.add_argument('--stores', type=int, default=50, help='Number of stores')
     parser.add_argument('--products', type=int, default=500, help='Number of products')
