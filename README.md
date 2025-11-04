@@ -39,7 +39,7 @@ curl http://localhost:8000/api/v1/health
 
 Observações rápidas:
 
-- Se não quiser buildar localmente, podemos publicar imagens em um registry público (Docker Hub/GHCR) para permitir `docker pull` — me avise se quiser isso.
+- Se não quiser buildar localmente, podemos publicar imagens em um registry público (Docker Hub/GHCR) para permitir `docker pull`.
 - Se você não tiver `docker compose` instalado, veja a seção "Alternativa sem Compose" mais abaixo no README para comandos equivalentes usando apenas `docker`.
 
 - `frontend/` — SPA React + Vite (dev com Vite). Possui script de build (`npm run build`).
