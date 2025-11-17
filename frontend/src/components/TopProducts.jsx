@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { usePanel } from '../context/PanelContext'
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import API from '../api'
 
 export default function TopProducts({ interactive = true }) {
   const [rows, setRows] = useState([])

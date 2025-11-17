@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { usePanel } from '../context/PanelContext'
+import API from '../api'
 
 export default function SidePanel() {
   const { open, payload, closePanel } = usePanel()
-  const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   const [deliveryData, setDeliveryData] = useState([])
   const [ticketData, setTicketData] = useState([])

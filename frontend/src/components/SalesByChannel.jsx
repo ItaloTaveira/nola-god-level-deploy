@@ -4,7 +4,7 @@ import { Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import API from '../api'
 
 const formatSeconds = (s) => {
   if (s == null || isNaN(s)) return '-'

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
+import API from '../api'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -13,7 +14,6 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function RevenueChart({ interactive = true }) {
   const [data, setData] = useState(null)

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import API from '../api'
 
 export default function CustomersLostPanel({ minOrders = 3, sinceDays = 30, limit = 50 }) {
-  const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
