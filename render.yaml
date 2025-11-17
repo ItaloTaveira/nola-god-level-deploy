@@ -56,7 +56,6 @@ jobs:
     envVars:
       - key: JOB_DATABASE_URL
         value: "<REPLACE_WITH_DATABASE_URL>"
-
 # Notes:
 # - After creating the Postgres instance in Render, copy the External DB URL
 #   (it will look like: postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require)

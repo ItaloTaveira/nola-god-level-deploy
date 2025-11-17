@@ -6,13 +6,16 @@
 - **Pré-requisitos:** ter conta no Render e permissões para criar serviços.
 
 - **Passo a passo (resumo):**
+
   - **1) Criar o Postgres (Managed Database)**
+
     - No Render Dashboard → New → Database → PostgreSQL
     - Escolha plano (free para testes), região (escolha mesma região do backend)
-    - Crie a DB; após a criação copie a *External Database URL* (formato
+    - Crie a DB; após a criação copie a _External Database URL_ (formato
       postgres://USER:PASSWORD@HOST:PORT/DBNAME?sslmode=require). Guarde em segredo.
 
   - **2) Criar o Backend (Web Service)**
+
     - New → Web Service → Connect with GitHub → selecione o repositório
     - Branch: `main` (ou sua branch)
     - Environment: `Node` (alternativa: `Docker` se preferir usar o Dockerfile)
@@ -25,6 +28,7 @@
       health não faça o fail quando o DB estiver inacessível momentaneamente.
 
   - **3) Criar o Frontend (Static Site)**
+
     - New → Static Site → Connect with GitHub → selecione o repositório
     - Root Directory: `frontend`
     - Build Command: `npm ci && npm run build`
@@ -37,10 +41,11 @@
     - Crie jobs que recebam `JOB_DATABASE_URL` como secret (cole a mesma string).
 
 - **Checklist de deploy e troubleshooting:**
+
   - [ ] Backend tem `DATABASE_URL` corretamente configurado (não deixe placeholder).
   - [ ] Backend e DB estão na mesma região para melhor latência e networking.
-  - [ ] Se usar Render managed DB, copie a *External Database URL* e não a
-        *Internal* (ou vice versa, dependendo da rede). Geralmente a External URL
+  - [ ] Se usar Render managed DB, copie a _External Database URL_ e não a
+        _Internal_ (ou vice versa, dependendo da rede). Geralmente a External URL
         funciona para o backend público.
   - [ ] Rode o Job `db-connection-test` (ou `npm run test-db` localmente) para
         verificar conectividade antes de abrir o serviço.
