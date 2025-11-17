@@ -12,6 +12,18 @@ services:
     # Start command: use the backend service start (the Docker image should
     # already expose a start command in the Dockerfile or package.json)
     startCommand: npm run start
+    # NOTE: If you build via Render's Docker support, you may need to pass
+    # the `VITE_API_URL` build-arg so the frontend build embeds the correct
+    # base URL. Two options:
+    # 1) Prefer leaving VITE_API_URL empty/unset and serve frontend as static
+    #    files from the backend (calls become relative `/api/...`). This
+    #    requires no build-arg and is simplest.
+    # 2) If you need an absolute URL baked into the frontend, set a Build
+    #    Command in Render that invokes docker build with a build-arg, for
+    #    example:
+    #      docker build --build-arg VITE_API_URL="https://nola-god-level-deploy.onrender.com" -t myimage .
+    #    Or, in Render UI, add the build-arg key `VITE_API_URL` under "Build"
+    #    settings (available in the Advanced Build settings).
     # Health check path
     healthCheckPath: /api/v1/health
     # Auto deploy from main branch
@@ -28,6 +40,15 @@ services:
         value: "false"
 
 jobs:
+  - type: job
+    name: db-connection-test
+    # Use this Job to test connectivity from the Render network to your DB.
+    # Set JOB_DATABASE_URL as a secret in Render and run this job once.
+    command: sh -lc 'export DATABASE_URL="$JOB_DATABASE_URL" && node tools/test_db_connection.js'
+    envVars:
+      - key: JOB_DATABASE_URL
+        value: "<REPLACE_WITH_DATABASE_URL>"
+
   - type: job
     name: data-generator
     # This job expects JOB_DATABASE_URL to be set in Render as a secret
