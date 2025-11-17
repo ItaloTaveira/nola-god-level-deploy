@@ -35,7 +35,6 @@ jobs:
     envVars:
       - key: JOB_DATABASE_URL
         value: "<REPLACE_WITH_DATABASE_URL>"
-
 # Notes:
 # - Replace `<REPLACE_WITH_DATABASE_URL>` with the managed Postgres connection
 #   string provided by Render (or any accessible Postgres) in the form:
