@@ -37,10 +37,52 @@ app.get('*', (req, res, next) => {
 app.use(errorHandler);
 
 const port = process.env.PORT || 8000;
+let server;
+
+function setupGracefulShutdown(pool) {
+  const shutdown = async (signal) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
+    try {
+      if (server && server.close) {
+        await new Promise((resolve) => server.close(resolve));
+      }
+      if (pool && typeof pool.end === 'function') {
+        await pool.end();
+      }
+      console.log('Shutdown complete');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error during shutdown', err && err.stack ? err.stack : err);
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason && reason.stack ? reason.stack : reason);
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception thrown:', err && err.stack ? err.stack : err);
+    // Let the shutdown handler take care of exiting after logging
+    shutdown('uncaughtException');
+  });
+}
+
 if (require.main === module) {
-  app.listen(port, () => {
+  server = app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });
+  // lazy-require db to avoid circulars; if db exports a pool we can close it
+  try {
+    const db = require('./db');
+    setupGracefulShutdown(db && db.pool ? db.pool : null);
+  } catch (e) {
+    // If db can't be required for some reason, still set up handlers without pool
+    setupGracefulShutdown(null);
+  }
 }
 
 module.exports = app;
