@@ -1,5 +1,7 @@
 # Nola God Level — Projeto
 
+Nota: os artefatos Docker foram removidos deste repositório para simplificar execução local. Use as instruções abaixo para rodar a aplicação diretamente em Node/Python sem Docker.
+
 ```
 ./
 ├─ backend/                # API Node.js
@@ -318,6 +320,56 @@ Lembre-se de apontar `DB_HOST` corretamente (se o Postgres estiver rodando em co
 ---
 
 Se quiser, eu posso também extrair dependências do gerador para um `requirements-generator.txt` separado e atualizar o `Dockerfile` para instalar apenas o que o gerador precisa — isso deixa o `backend` e o `data-generator` com dependências separadas.
+
+---
+
+## Rodar / Deploy sem Docker (opção: executar aplicação "normal")
+
+Se você prefere não usar imagens Docker para deploy, segue um fluxo simples para executar a aplicação como uma aplicação Node comum (útil para PaaS que não usam Docker ou para deploy direto em servidor):
+
+Pré-requisitos:
+
+- Node.js (v18/20 recomendado) e npm
+- Um banco PostgreSQL (pode ser um serviço gerenciado). Tenha a `DATABASE_URL` pronta.
+
+Passos mínimos:
+
+1. Na raiz do repositório, instale dependências e build do frontend:
+
+```bash
+# executa install e build do frontend e copia o dist para o backend/public
+npm ci
+npm run build
+```
+
+2. Configure a variável de ambiente `DATABASE_URL` apontando para seu Postgres (ex.: `export DATABASE_URL="postgresql://user:pass@host:5432/dbname"`).
+
+3. Execute o backend:
+
+```bash
+cd backend
+npm ci --production
+npm start
+```
+
+Para desenvolvimento local (hot-reload do backend + build do frontend uma vez):
+
+```bash
+npm run build       # builda o frontend
+cd backend
+npm install
+npm run dev         # roda nodemon
+```
+
+Deploy em Render (sem Docker):
+
+- Configure um Web Service com:
+  - Build Command: `npm run build`
+  - Start Command: `npm run start`
+  - Environment variables: `DATABASE_URL` (runtime) e `VITE_API_URL` (build-time)
+  - Root: use a raiz do repositório para que o `npm run build` encontre `frontend/`.
+
+Esse fluxo torna possível publicar a aplicação em plataformas que usam buildpacks ou que esperam um projeto Node padrão sem Docker.
 
 ---
 

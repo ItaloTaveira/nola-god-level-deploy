@@ -1,0 +1,12 @@
+{
+  "name": "nola-god-level-deploy",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:frontend": "cd frontend && npm ci && npm run build",
+    "copy:frontend": "rm -rf backend/public && mkdir -p backend/public && cp -R frontend/dist/* backend/public/",
+    "build": "npm run build:frontend && npm run copy:frontend",
+    "start": "cd backend && npm ci --production && npm start",
+    "start:dev": "cd backend && npm ci && npm run dev"
+  }
+}
