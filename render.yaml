@@ -1,49 +1,50 @@
-# Render infra-as-code (placeholder). Replace placeholders with real values in the
-# Render UI or via secrets. This file configures a single Web Service (Docker)
-# that builds from `backend/Dockerfile` and a Job to run the data generator.
-# Review Render docs and adjust fields (region, plan, repo, branch) as needed.
+# Render infra-as-code for three separate resources: managed Postgres, backend
+# web service (Node) and frontend static site. Replace placeholders in the
+# Render Console or via secrets before deploying.
+
+databases:
+  - type: postgres
+    name: nola-postgres
+    plan: free
+    region: oregon
+    # Optional: initial database name (Render will create a DB and credentials)
+    databaseName: nola_postgres
+
 services:
   - type: web
-    name: nola-god-level-web
-    env: docker
-    # Use the Dockerfile inside backend; build context is repository root
-    dockerfilePath: backend/Dockerfile
-    buildContext: .
-    # Start command: use the backend service start (the Docker image should
-    # already expose a start command in the Dockerfile or package.json)
-    startCommand: npm run start
-    # NOTE: If you build via Render's Docker support, you may need to pass
-    # the `VITE_API_URL` build-arg so the frontend build embeds the correct
-    # base URL. Two options:
-    # 1) Prefer leaving VITE_API_URL empty/unset and serve frontend as static
-    #    files from the backend (calls become relative `/api/...`). This
-    #    requires no build-arg and is simplest.
-    # 2) If you need an absolute URL baked into the frontend, set a Build
-    #    Command in Render that invokes docker build with a build-arg, for
-    #    example:
-    #      docker build --build-arg VITE_API_URL="https://nola-god-level-deploy.onrender.com" -t myimage .
-    #    Or, in Render UI, add the build-arg key `VITE_API_URL` under "Build"
-    #    settings (available in the Advanced Build settings).
-    # Health check path
-    healthCheckPath: /api/v1/health
-    # Auto deploy from main branch
+    name: nola-backend
+    env: node
+    # Build and run from the `backend` folder
     repo: ItaloTaveira/nola-god-level-deploy
     branch: main
+    root: backend
+    buildCommand: npm ci
+    startCommand: npm start
     autoDeploy: true
+    healthCheckPath: /api/v1/health
     envVars:
       - key: DATABASE_URL
-        # mark as secret in the Render UI
+        # Set this to the External DB URL from the managed Postgres above
         value: "<REPLACE_WITH_DATABASE_URL>"
-      - key: VITE_API_URL
-        value: "https://<RENDER_SERVICE_URL>"
       - key: HEALTH_FAIL_ON_DB
         value: "false"
+
+  - type: static
+    name: nola-frontend
+    repo: ItaloTaveira/nola-god-level-deploy
+    branch: main
+    root: frontend
+    buildCommand: npm ci && npm run build
+    publishPath: frontend/dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        # Point the SPA to your backend URL (or leave empty to use relative paths)
+        value: "https://<RENDER_BACKEND_URL>"
 
 jobs:
   - type: job
     name: db-connection-test
-    # Use this Job to test connectivity from the Render network to your DB.
-    # Set JOB_DATABASE_URL as a secret in Render and run this job once.
     command: sh -lc 'export DATABASE_URL="$JOB_DATABASE_URL" && node tools/test_db_connection.js'
     envVars:
       - key: JOB_DATABASE_URL
@@ -51,17 +52,18 @@ jobs:
 
   - type: job
     name: data-generator
-    # This job expects JOB_DATABASE_URL to be set in Render as a secret
     command: python generate_data.py --db-url "$JOB_DATABASE_URL"
     envVars:
       - key: JOB_DATABASE_URL
         value: "<REPLACE_WITH_DATABASE_URL>"
+
 # Notes:
-# - Replace `<REPLACE_WITH_DATABASE_URL>` with the managed Postgres connection
-#   string provided by Render (or any accessible Postgres) in the form:
-#   postgres://USER:PASSWORD@HOST:PORT/DBNAME?sslmode=require
-# - `VITE_API_URL` should be set to the Web Service URL (https://...)
-# - If you prefer Render to provision a Postgres, create a Render Database
-#   in the dashboard and then copy its connection string into `DATABASE_URL`.
-# - After editing this file, you can use Render's `render.yaml` deploy flow
-#   (or create services in the Render Console and paste values manually).
+# - After creating the Postgres instance in Render, copy the External DB URL
+#   (it will look like: postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require)
+#   and paste it into the `DATABASE_URL` and `JOB_DATABASE_URL` values above
+#   (or set them as Secrets in the Render Console rather than editing this file).
+# - For the frontend, prefer leaving `VITE_API_URL` empty and call APIs with
+#   relative paths (e.g. `/api`). If you need an absolute URL, set `VITE_API_URL`
+#   to the backend service URL (https://...).
+# - If you change the Backend to a Docker build instead of `env: node`, adjust
+#   the `services.nola-backend` block to `env: docker` and set `dockerfilePath`.
