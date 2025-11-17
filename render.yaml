@@ -1,0 +1,47 @@
+# Render infra-as-code (placeholder). Replace placeholders with real values in the
+# Render UI or via secrets. This file configures a single Web Service (Docker)
+# that builds from `backend/Dockerfile` and a Job to run the data generator.
+# Review Render docs and adjust fields (region, plan, repo, branch) as needed.
+services:
+  - type: web
+    name: nola-god-level-web
+    env: docker
+    # Use the Dockerfile inside backend; build context is repository root
+    dockerfilePath: backend/Dockerfile
+    buildContext: .
+    # Start command: use the backend service start (the Docker image should
+    # already expose a start command in the Dockerfile or package.json)
+    startCommand: npm run start
+    # Health check path
+    healthCheckPath: /api/v1/health
+    # Auto deploy from main branch
+    repo: ItaloTaveira/nola-god-level-deploy
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        # mark as secret in the Render UI
+        value: "<REPLACE_WITH_DATABASE_URL>"
+      - key: VITE_API_URL
+        value: "https://<RENDER_SERVICE_URL>"
+      - key: HEALTH_FAIL_ON_DB
+        value: "false"
+
+jobs:
+  - type: job
+    name: data-generator
+    # This job expects JOB_DATABASE_URL to be set in Render as a secret
+    command: python generate_data.py --db-url "$JOB_DATABASE_URL"
+    envVars:
+      - key: JOB_DATABASE_URL
+        value: "<REPLACE_WITH_DATABASE_URL>"
+
+# Notes:
+# - Replace `<REPLACE_WITH_DATABASE_URL>` with the managed Postgres connection
+#   string provided by Render (or any accessible Postgres) in the form:
+#   postgres://USER:PASSWORD@HOST:PORT/DBNAME?sslmode=require
+# - `VITE_API_URL` should be set to the Web Service URL (https://...)
+# - If you prefer Render to provision a Postgres, create a Render Database
+#   in the dashboard and then copy its connection string into `DATABASE_URL`.
+# - After editing this file, you can use Render's `render.yaml` deploy flow
+#   (or create services in the Render Console and paste values manually).
