@@ -8,19 +8,35 @@ let pool;
 // Create a Pool defensively. Some environments provide a DATABASE_URL that
 // may be malformed or require special handling; wrap in try/catch and fall
 // back to individual env vars when needed.
+function mask(s) {
+  if (!s) return '***';
+  if (s.length <= 12) return '***';
+  return s.slice(0, 6) + '...' + s.slice(-6);
+}
+
+function looksLikeConnectionString(s) {
+  if (!s || typeof s !== 'string') return false;
+  // basic check: must contain :// (protocol) and not be a simple host:port
+  return /:\/\//.test(s);
+}
+
 function createPool() {
   if (process.env.DATABASE_URL) {
-    try {
-      // When running in managed environments the connection often requires SSL.
-      // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
-      // If you want stricter validation, provide a proper CA and remove this option.
-      pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-      });
-    } catch (err) {
-      console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err);
-      pool = undefined;
+    if (!looksLikeConnectionString(process.env.DATABASE_URL)) {
+      console.error('DATABASE_URL appears to be set but does not look like a connection string. Falling back to individual DB_* env vars. masked:', mask(process.env.DATABASE_URL));
+    } else {
+      try {
+        // When running in managed environments the connection often requires SSL.
+        // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
+        // If you want stricter validation, provide a proper CA and remove this option.
+        pool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false }
+        });
+      } catch (err) {
+        console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err, 'masked DATABASE_URL:', mask(process.env.DATABASE_URL));
+        pool = undefined;
+      }
     }
   }
 
