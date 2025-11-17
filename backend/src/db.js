@@ -31,24 +31,39 @@ function looksLikeConnectionString(s) {
 function createPool() {
   if (process.env.DATABASE_URL) {
     if (!looksLikeConnectionString(process.env.DATABASE_URL)) {
-      console.error('DATABASE_URL appears to be set but does not look like a connection string. Falling back to individual DB_* env vars. masked:', mask(process.env.DATABASE_URL));
+      // If DATABASE_URL is present but invalid, do NOT silently fall back
+      // to localhost. This avoids situations where a placeholder like
+      // "<DB_HOST>" causes the app to query a non-existent local DB.
+      const masked = mask(process.env.DATABASE_URL);
+      const msg = `DATABASE_URL is set but invalid (masked: ${masked}). ` +
+        `Please fix the variable or unset it to use individual DB_* env vars.`;
+      console.error(msg);
+      // Leave pool undefined so we can decide next steps. Do not auto-fallback.
     } else {
       try {
-        // When running in managed environments the connection often requires SSL.
-        // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
-        // If you want stricter validation, provide a proper CA and remove this option.
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
           ssl: { rejectUnauthorized: false }
         });
       } catch (err) {
         console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err, 'masked DATABASE_URL:', mask(process.env.DATABASE_URL));
-        pool = undefined;
+        // If pool creation fails, do not silently fallback — surface the error.
+        throw err;
       }
     }
   }
 
+  // If DATABASE_URL wasn't used to create a pool, and explicit DB_* vars are
+  // provided, use them. If neither is available, create a pool pointing to
+  // localhost only if running in development (NODE_ENV !== 'production').
   if (!pool) {
+    const hasDbEnv = process.env.DB_HOST || process.env.DB_USER || process.env.DB_NAME || process.env.DB_PASSWORD || process.env.DB_PORT;
+    if (!hasDbEnv && process.env.NODE_ENV === 'production') {
+      const err = new Error('No valid DATABASE_URL or DB_* environment variables found in production. Set DATABASE_URL to a reachable Postgres connection string.');
+      console.error(err.message);
+      throw err;
+    }
+
     pool = new Pool({
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,

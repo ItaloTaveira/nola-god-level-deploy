@@ -9,4 +9,7 @@
     "start": "cd backend && npm ci --production && npm start",
     "start:dev": "cd backend && npm ci && npm run dev"
   }
+  ,"devDependencies": {
+    "pg": "^8.11.0"
+  }
 }
