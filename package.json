@@ -8,6 +8,7 @@
     "build": "npm run build:frontend && npm run copy:frontend",
     "start": "cd backend && npm ci --production && npm start",
     "start:dev": "cd backend && npm ci && npm run dev"
+    ,"test-db": "node tools/test_db_connection.js"
   }
   ,"devDependencies": {
     "pg": "^8.11.0"
