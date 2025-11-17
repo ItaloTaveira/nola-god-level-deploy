@@ -15,6 +15,20 @@ function mask(s) {
   return s.slice(0, 6) + '...' + s.slice(-6);
 }
 
+function sanitizeConnectionString(s) {
+  if (!s || typeof s !== 'string') return s;
+  let out = s.trim();
+  // remove surrounding angle brackets often used in docs: <postgres://...>
+  if (out.startsWith('<') && out.endsWith('>')) {
+    out = out.slice(1, -1).trim();
+  }
+  // remove surrounding single or double quotes
+  if ((out.startsWith('"') && out.endsWith('"')) || (out.startsWith("'") && out.endsWith("'"))) {
+    out = out.slice(1, -1).trim();
+  }
+  return out;
+}
+
 function looksLikeConnectionString(s) {
   if (!s || typeof s !== 'string') return false;
   try {
@@ -30,11 +44,9 @@ function looksLikeConnectionString(s) {
 
 function createPool() {
   if (process.env.DATABASE_URL) {
-    if (!looksLikeConnectionString(process.env.DATABASE_URL)) {
-      // If DATABASE_URL is present but invalid, do NOT silently fall back
-      // to localhost. This avoids situations where a placeholder like
-      // "<DB_HOST>" causes the app to query a non-existent local DB.
-      const masked = mask(process.env.DATABASE_URL);
+    const sanitized = sanitizeConnectionString(process.env.DATABASE_URL);
+    if (!looksLikeConnectionString(sanitized)) {
+      const masked = mask(sanitized || process.env.DATABASE_URL);
       const msg = `DATABASE_URL is set but invalid (masked: ${masked}). ` +
         `Please fix the variable or unset it to use individual DB_* env vars.`;
       console.error(msg);
@@ -42,11 +54,11 @@ function createPool() {
     } else {
       try {
         pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
+          connectionString: sanitized,
           ssl: { rejectUnauthorized: false }
         });
       } catch (err) {
-        console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err, 'masked DATABASE_URL:', mask(process.env.DATABASE_URL));
+        console.error('Failed to create PG Pool from DATABASE_URL:', err && err.stack ? err.stack : err, 'masked DATABASE_URL:', mask(sanitized));
         // If pool creation fails, do not silently fallback — surface the error.
         throw err;
       }
