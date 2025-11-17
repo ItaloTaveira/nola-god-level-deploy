@@ -76,12 +76,18 @@ function createPool() {
       throw err;
     }
 
+    const host = process.env.DB_HOST || 'localhost';
+    const port = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    const sslOption = isLocalHost ? false : { rejectUnauthorized: false };
+
     pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
+      host,
+      port,
       user: process.env.DB_USER || 'challenge',
       password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'challenge_db'
+      database: process.env.DB_NAME || 'challenge_db',
+      ssl: sslOption
     });
   }
 
