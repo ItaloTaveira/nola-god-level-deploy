@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 // 1) DATABASE_URL environment variable (typical in managed platforms like Render/Heroku)
 // 2) Individual DB_* variables for local/docker-compose setups
 let pool;
+let dbAvailable = false;
 
 // Create a Pool defensively. Some environments provide a DATABASE_URL that
 // may be malformed or require special handling; wrap in try/catch and fall
@@ -57,15 +58,33 @@ function createPool() {
     });
   }
 
-  // Run a quick connection test and log detailed errors if it fails.
-  pool.query('SELECT 1').catch((err) => {
-    console.error('Initial DB connection test failed:', err && err.stack ? err.stack : err);
-  });
+  // Run a quick connection test with retries in background and set dbAvailable flag.
+  const maxRetries = process.env.DB_CONNECT_RETRIES ? Number(process.env.DB_CONNECT_RETRIES) : 5;
+  const delayMs = process.env.DB_CONNECT_DELAY_MS ? Number(process.env.DB_CONNECT_DELAY_MS) : 2000;
+
+  (async function testConnectionWithRetries() {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await pool.query('SELECT 1');
+        dbAvailable = true;
+        console.log('DB connection established');
+        return;
+      } catch (err) {
+        dbAvailable = false;
+        console.error(`Initial DB connection test failed (attempt ${attempt}/${maxRetries}):`, err && err.stack ? err.stack : err);
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+      }
+    }
+    console.error('DB connection could not be established after retries. Application will continue and report DB as unavailable.');
+  })();
 }
 
 createPool();
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  pool
+  pool,
+  isConnected: () => !!dbAvailable
 };

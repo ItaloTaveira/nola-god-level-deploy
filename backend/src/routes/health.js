@@ -3,32 +3,34 @@ const router = express.Router();
 const db = require('../db');
 
 router.get('/', async (req, res) => {
-  try {
-    // quick DB check
-    await db.query('SELECT 1');
-    res.json({ ok: true, db: 'ok' });
-  } catch (err) {
-    // Log full stack for debugging, but avoid printing raw DATABASE_URL here.
-    const full = err && err.stack ? err.stack : err;
-    console.error('DB health check failed', full);
+  // Use the DB availability flag from db module so we don't block on a query.
+  const dbOk = db && typeof db.isConnected === 'function' ? db.isConnected() : false;
 
-    // Log a masked DATABASE_URL indicator to help diagnose malformed values without exposing secrets.
-    try {
-      const raw = process.env.DATABASE_URL;
-      if (raw) {
-        // mask password if present: postgres://user:PASS@host/... -> postgres://user:*****@host/...
-        const masked = raw.replace(/:(?:[^:@]+)@/, ':*****@');
-        console.error('DATABASE_URL (masked):', masked);
-      } else {
-        console.error('DATABASE_URL: <not set>');
-      }
-    } catch (e) {
-      // do not let masking errors hide the original error
-      console.error('Failed to log masked DATABASE_URL', e && e.stack ? e.stack : e);
-    }
-
-    res.status(500).json({ ok: false, db: 'error', error: err && err.message ? err.message : String(err) });
+  if (dbOk) {
+    return res.json({ ok: true, db: 'ok' });
   }
+
+  // DB is not available. Log masked DATABASE_URL to help diagnose, but do not expose secrets.
+  try {
+    const raw = process.env.DATABASE_URL;
+    if (raw) {
+      const masked = raw.replace(/:(?:[^:@]+)@/, ':*****@');
+      console.error('DATABASE_URL (masked):', masked);
+    } else {
+      console.error('DATABASE_URL: <not set>');
+    }
+  } catch (e) {
+    console.error('Failed to log masked DATABASE_URL', e && e.stack ? e.stack : e);
+  }
+
+  // Control whether health should fail when DB is down.
+  const failOnDb = process.env.HEALTH_FAIL_ON_DB === 'true';
+  if (failOnDb) {
+    return res.status(500).json({ ok: false, db: 'down' });
+  }
+
+  // Default: report service as up but DB as down so process remains healthy in PaaS.
+  return res.json({ ok: true, db: 'down' });
 });
 
 module.exports = router;
