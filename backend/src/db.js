@@ -16,8 +16,15 @@ function mask(s) {
 
 function looksLikeConnectionString(s) {
   if (!s || typeof s !== 'string') return false;
-  // basic check: must contain :// (protocol) and not be a simple host:port
-  return /:\/\//.test(s);
+  try {
+    // use WHATWG URL parser to validate; will throw for invalid strings
+    // This accepts postgres://... connection strings
+    // eslint-disable-next-line no-new
+    new URL(s);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function createPool() {
