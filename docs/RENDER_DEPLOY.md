@@ -14,11 +14,11 @@ Este guia mostra os passos mínimos para criar um único Web Service (backend + 
      - No Console do Render, escolha "New" → "Static Site / Web Service" e selecione "Deploy from Git".
      - Ao configurar, aponte para este repositório e branch `main`.
      - No campo de ambiente escolha `Docker` e informe `backend/Dockerfile` como `Dockerfile Path` e `.` como `Build Context`.
-      - Adicione a variável `DATABASE_URL` com a connection string copiada do passo 1 e marque como secret.
-      - `VITE_API_URL` — opções:
-         - Recomendada: deixe `VITE_API_URL` vazia/unset e sirva o frontend a partir do backend (chamadas serão relativas como `/api/v1/...`). Simples e evita problemas de CORS/URL.
-         - Se você precisa que o frontend tenha uma URL absoluta embutida, informe `VITE_API_URL` com o valor exato (ex: `https://nola-god-level-deploy.onrender.com`) tanto em Runtime quanto como Build Arg (ver abaixo).
-      - Build-arg (Docker builds): como o Dockerfile monta o frontend na imagem durante o build, se você usar a opção de construir a imagem no Render você precisa passar o build-arg `VITE_API_URL` para que o `npm run build` do frontend receba essa variável. Exemplos abaixo.
+     - Adicione a variável `DATABASE_URL` com a connection string copiada do passo 1 e marque como secret.
+     - `VITE_API_URL` — opções:
+       - Recomendada: deixe `VITE_API_URL` vazia/unset e sirva o frontend a partir do backend (chamadas serão relativas como `/api/v1/...`). Simples e evita problemas de CORS/URL.
+       - Se você precisa que o frontend tenha uma URL absoluta embutida, informe `VITE_API_URL` com o valor exato (ex: `https://nola-god-level-deploy.onrender.com`) tanto em Runtime quanto como Build Arg (ver abaixo).
+     - Build-arg (Docker builds): como o Dockerfile monta o frontend na imagem durante o build, se você usar a opção de construir a imagem no Render você precisa passar o build-arg `VITE_API_URL` para que o `npm run build` do frontend receba essa variável. Exemplos abaixo.
      - Health check: `/api/v1/health`.
 
    - Método B (manual): criar o Web Service via UI e preencher as mesmas configurações acima.
