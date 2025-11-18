@@ -78,3 +78,12 @@ jobs:
 #   to the backend service URL (https://...).
 # - If you change the Backend to a Docker build instead of `env: node`, adjust
 #   the `services.nola-backend` block to `env: docker` and set `dockerfilePath`.
+# - After creating the Postgres instance in Render, copy the External DB URL
+#   (it will look like: postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require)
+#   and paste it into the `DATABASE_URL` and `JOB_DATABASE_URL` values above
+#   (or set them as Secrets in the Render Console rather than editing this file).
+# - For the frontend, prefer leaving `VITE_API_URL` empty and call APIs with
+#   relative paths (e.g. `/api`). If you need an absolute URL, set `VITE_API_URL`
+#   to the backend service URL (https://...).
+# - If you change the Backend to a Docker build instead of `env: node`, adjust
+#   the `services.nola-backend` block to `env: docker` and set `dockerfilePath`.
