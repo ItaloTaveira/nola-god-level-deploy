@@ -5,10 +5,11 @@
   "scripts": {
     "build:frontend": "cd frontend && npm ci && npm run build",
     "copy:frontend": "rm -rf backend/public && mkdir -p backend/public && cp -R frontend/dist/* backend/public/",
-    "build": "npm run build:frontend && npm run copy:frontend",
+    "build:all": "npm run build:frontend && npm run copy:frontend",
+    "build": "npm run build:frontend",
     "start": "cd backend && npm ci --production && npm start",
-    "start:dev": "cd backend && npm ci && npm run dev"
-    ,"test-db": "node tools/test_db_connection.js"
+    "start:dev": "cd backend && npm ci && npm run dev",
+    "test-db": "node tools/test_db_connection.js"
   }
   ,"devDependencies": {
     "pg": "^8.11.0"
