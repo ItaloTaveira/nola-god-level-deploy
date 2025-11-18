@@ -5,11 +5,15 @@ Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render co
 - Opção recomendada (Render Jobs, segura e direta):
 
   - Crie um Secret `JOB_DATABASE_URL` no Render com a Internal Database URL.
-  - Crie um Job `migrate` com a imagem `postgres:15-alpine` e comando:
-    - `sh -lc './tools/run_migrate.sh'`
-  - Crie um Job `data-generator` com a imagem `python:3.11-slim` e comando:
-    - `sh -lc './tools/run_data_generator.sh --months 3'`
-  - Rode primeiro o `migrate`, verifique logs; depois rode o `data-generator`.
+  - Job `migrate` (infra-as-code ou UI):
+    - Image: `postgres:15-alpine`
+    - Command: `sh -lc 'PGSSLMODE=require ./tools/run_migrate.sh'`
+    - Env var: `JOB_DATABASE_URL` = Internal Database URL (secret)
+  - Job `data-generator` (infra-as-code ou UI):
+    - Image: `python:3.11-slim`
+    - Command: `sh -lc 'pip install -r requirements.txt && ./tools/run_data_generator.sh --months 1'`
+    - Env var: `JOB_DATABASE_URL` = Internal Database URL (secret)
+  - Rode primeiro o `migrate`, verifique logs; depois rode o `data-generator` com `--months 1` para validar.
 
 - Opção alternativa (local, usando External URL):
 

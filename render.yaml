@@ -45,14 +45,26 @@ services:
 jobs:
   - type: job
     name: db-connection-test
+    image: node:18-alpine
     command: sh -lc 'export DATABASE_URL="$JOB_DATABASE_URL" && node tools/test_db_connection.js'
     envVars:
       - key: JOB_DATABASE_URL
         value: "<REPLACE_WITH_DATABASE_URL>"
 
   - type: job
+    name: migrate
+    image: postgres:15-alpine
+    # This job will run the SQL schema (db/init/01-schema.sql) using psql
+    command: sh -lc 'PGSSLMODE=require ./tools/run_migrate.sh'
+    envVars:
+      - key: JOB_DATABASE_URL
+        value: "<REPLACE_WITH_DATABASE_URL>"
+
+  - type: job
     name: data-generator
-    command: python generate_data.py --db-url "$JOB_DATABASE_URL"
+    image: python:3.11-slim
+    # This job will install requirements and run the Python generator
+    command: sh -lc 'pip install -r requirements.txt && ./tools/run_data_generator.sh --months 1'
     envVars:
       - key: JOB_DATABASE_URL
         value: "<REPLACE_WITH_DATABASE_URL>"
