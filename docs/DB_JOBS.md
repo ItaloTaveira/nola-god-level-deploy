@@ -3,6 +3,7 @@
 Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render com `JOB_DATABASE_URL` (interno).
 
 - Opção recomendada (Render Jobs, segura e direta):
+
   - Crie um Secret `JOB_DATABASE_URL` no Render com a Internal Database URL.
   - Crie um Job `migrate` com a imagem `postgres:15-alpine` e comando:
     - `sh -lc './tools/run_migrate.sh'`
@@ -11,6 +12,7 @@ Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render co
   - Rode primeiro o `migrate`, verifique logs; depois rode o `data-generator`.
 
 - Opção alternativa (local, usando External URL):
+
   - Copie a External DB URL do painel do Render (contains host reachable from your laptop).
   - No terminal local:
     ```bash
@@ -22,6 +24,7 @@ Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render co
 - Opção rápida única (se você quiser evitar Jobs): adicionar um endpoint administrativo para rodar a migração (posso implementar, menos seguro).
 
 Notas:
+
 - Comece com `--months 1` ou `--months 3` no `data-generator` para validar antes de gerar grandes volumes.
 - Se `psql` reclamar de SSL, use `PGSSLMODE=require psql "$JOB_DATABASE_URL" -f db/init/01-schema.sql`.
 - Se o usuário no connection string não tiver permissão para criar tabelas, use o `postgres` user ou um usuário com permissão suficiente.
