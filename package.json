@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build:frontend": "cd frontend && npm ci && npm run build",
+    "build:frontend": "cd frontend && npm ci --include=dev && npm run build",
     "copy:frontend": "rm -rf backend/public && mkdir -p backend/public && cp -R frontend/dist/* backend/public/",
     "build:all": "npm run build:frontend && npm run copy:frontend",
     "build": "npm run build:frontend",

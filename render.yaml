@@ -34,7 +34,7 @@ services:
     repo: ItaloTaveira/nola-god-level-deploy
     branch: main
     root: frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     publishPath: dist
     autoDeploy: true
     envVars:
