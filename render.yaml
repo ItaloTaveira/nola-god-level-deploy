@@ -35,7 +35,7 @@ services:
     branch: main
     root: frontend
     buildCommand: npm ci && npm run build
-    publishPath: frontend/dist
+    publishPath: dist
     autoDeploy: true
     envVars:
       - key: VITE_API_URL
