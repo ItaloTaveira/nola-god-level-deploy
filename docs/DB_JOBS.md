@@ -3,6 +3,7 @@
 Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render com `JOB_DATABASE_URL` (interno).
 
 - Opção recomendada (Render Jobs, segura e direta):
+
   - Crie um Secret `JOB_DATABASE_URL` no Render com a Internal Database URL.
   - Job `migrate` (infra-as-code ou UI):
     - Image: `postgres:15-alpine`
@@ -31,7 +32,7 @@ Notas:
 - Comece com `--months 1` ou `--months 3` no `data-generator` para validar antes de gerar grandes volumes.
 - Se `psql` reclamar de SSL, use `PGSSLMODE=require psql "$JOB_DATABASE_URL" -f db/init/01-schema.sql`.
 - Se o usuário no connection string não tiver permissão para criar tabelas, use o `postgres` user ou um usuário com permissão suficiente.
-**Como aplicar schema e popular o banco (rápido)**
+  **Como aplicar schema e popular o banco (rápido)**
 
 Resumo: você tem 3 opções fáceis — a recomendada é usar Jobs do Render com `JOB_DATABASE_URL` (interno).
 
