@@ -1,6 +1,18 @@
 const repo = require('../repositories/metricsRepository');
 
 const parseDateRange = (start, end) => {
+  // Allow overriding default range via environment variables
+  // Useful when seeded data is from past dates and default (last 30 days) returns empty results.
+  const envStart = process.env.DEFAULT_START;
+  const envEnd = process.env.DEFAULT_END;
+
+  if (!start && envStart) {
+    start = envStart; // expected ISO8601 or YYYY-MM-DD
+  }
+  if (!end && envEnd) {
+    end = envEnd; // expected ISO8601 or YYYY-MM-DD
+  }
+
   const now = new Date();
   const defaultEnd = now.toISOString();
   const defaultStart = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString(); // last 30 days

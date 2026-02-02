@@ -14,6 +14,8 @@ import {
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const DEFAULT_START = import.meta.env.VITE_DEFAULT_START
+const DEFAULT_END = import.meta.env.VITE_DEFAULT_END
 
 export default function RevenueChart({ interactive = true }) {
   const [data, setData] = useState(null)
@@ -25,9 +27,12 @@ export default function RevenueChart({ interactive = true }) {
 
   const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
   const [start, setStart] = useState(() => {
+    if (DEFAULT_START) return DEFAULT_START
     const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0,10)
   })
-  const [end, setEnd] = useState(() => new Date().toISOString().slice(0,10))
+  const [end, setEnd] = useState(() => {
+    return DEFAULT_END || new Date().toISOString().slice(0,10)
+  })
   const [compare, setCompare] = useState('previous') // options: none, previous, yoy
 
   // fetch whenever the selected dates or comparison mode change
@@ -48,11 +53,19 @@ export default function RevenueChart({ interactive = true }) {
         setStart(startDateStr); setEnd(endDateStr)
       }
       const res = await axios.get(`${API}/api/v1/metrics/revenue?start=${startDateStr}&end=${endDateStr}`)
-      const rows = res.data.data || []
+      let rows = res.data.data || []
 
       let total = rows.reduce((s, r) => s + Number(r.revenue || 0), 0)
       let totalPrev = null
       let pct = null
+
+      if ((!rows || rows.length === 0) && DEFAULT_START && DEFAULT_END) {
+        // fallback: try default window from env when no recent data is available
+        const res2 = await axios.get(`${API}/api/v1/metrics/revenue?start=${DEFAULT_START}&end=${DEFAULT_END}`)
+        rows = res2.data.data || []
+        setStart(DEFAULT_START)
+        setEnd(DEFAULT_END)
+      }
 
       if (compareMode === 'previous') {
         const days = rows.length || 30

@@ -3,6 +3,8 @@ import axios from 'axios'
 import { usePanel } from '../context/PanelContext'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const DEFAULT_START = import.meta.env.VITE_DEFAULT_START
+const DEFAULT_END = import.meta.env.VITE_DEFAULT_END
 
 export default function TopProducts({ interactive = true }) {
   const [rows, setRows] = useState([])
@@ -10,24 +12,38 @@ export default function TopProducts({ interactive = true }) {
   const [mode, setMode] = useState('top') // 'top' or 'low-margin'
   const [assumedCost, setAssumedCost] = useState(0.3)
   const [limit, setLimit] = useState(20)
-  const [start, setStart] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0,10)
-  })
-  const [end, setEnd] = useState(() => new Date().toISOString().slice(0,10))
+  const [start, setStart] = useState(() => DEFAULT_START || (() => { const d = new Date(); d.setDate(d.getDate()-30); return d.toISOString().slice(0,10) })())
+  const [end, setEnd] = useState(() => DEFAULT_END || new Date().toISOString().slice(0,10))
 
   const { openPanel } = usePanel()
 
   const fetchData = async () => {
     setLoading(true)
     try {
+      let res
       if (mode === 'top') {
-        const res = await axios.get(`${API}/api/v1/metrics/top-products?start=${start}&end=${end}&limit=${limit}`)
-        setRows(res.data.data || [])
+        res = await axios.get(`${API}/api/v1/metrics/top-products?start=${start}&end=${end}&limit=${limit}`)
       } else {
         const pct = Number(assumedCost)
-        const res = await axios.get(`${API}/api/v1/metrics/product-margins?start=${start}&end=${end}&limit=${limit}&assumed_cost_pct=${pct}`)
-        setRows(res.data.data || [])
+        res = await axios.get(`${API}/api/v1/metrics/product-margins?start=${start}&end=${end}&limit=${limit}&assumed_cost_pct=${pct}`)
       }
+      let out = res.data.data || []
+      if ((!out || out.length === 0) && DEFAULT_START && DEFAULT_END) {
+        // fallback window
+        if (mode === 'top') {
+          const res2 = await axios.get(`${API}/api/v1/metrics/top-products?start=${DEFAULT_START}&end=${DEFAULT_END}&limit=${limit}`)
+          out = res2.data.data || []
+        } else {
+          const pct = Number(assumedCost)
+          const res2 = await axios.get(`${API}/api/v1/metrics/product-margins?start=${DEFAULT_START}&end=${DEFAULT_END}&limit=${limit}&assumed_cost_pct=${pct}`)
+          out = res2.data.data || []
+        }
+        if (out.length > 0) {
+          setStart(DEFAULT_START)
+          setEnd(DEFAULT_END)
+        }
+      }
+      setRows(out)
     } catch (err) {
       console.error(err)
       setRows([])

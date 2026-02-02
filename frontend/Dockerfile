@@ -5,6 +5,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --production=false
 
+# Build args para injetar variáveis Vite (compiladas em tempo de build)
+ARG VITE_API_URL
+ARG VITE_DEFAULT_START
+ARG VITE_DEFAULT_END
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_DEFAULT_START=${VITE_DEFAULT_START}
+ENV VITE_DEFAULT_END=${VITE_DEFAULT_END}
+
 # Copia o restante do código e gera o build do Vite
 COPY . .
 RUN npm run build

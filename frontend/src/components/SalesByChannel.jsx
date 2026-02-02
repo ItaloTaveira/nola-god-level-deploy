@@ -5,6 +5,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const DEFAULT_START = import.meta.env.VITE_DEFAULT_START
+const DEFAULT_END = import.meta.env.VITE_DEFAULT_END
 
 const formatSeconds = (s) => {
   if (s == null || isNaN(s)) return '-'
@@ -35,12 +37,17 @@ export default function SalesByChannel({ showDetailsPanel = false, interactive =
     const fetchData = async () => {
       setLoading(true)
       try {
-        const end = new Date().toISOString().slice(0,10)
-        const startDate = new Date()
-        startDate.setDate(startDate.getDate() - 30)
-        const start = startDate.toISOString().slice(0,10)
+        const end = DEFAULT_END || new Date().toISOString().slice(0,10)
+        const start = DEFAULT_START || (() => { const d = new Date(); d.setDate(d.getDate()-30); return d.toISOString().slice(0,10) })()
         const res = await axios.get(`${API}/api/v1/metrics/sales-by-channel?start=${start}&end=${end}`)
         const rows = res.data.data || []
+        if ((!rows || rows.length === 0) && DEFAULT_START && DEFAULT_END) {
+          const res2 = await axios.get(`${API}/api/v1/metrics/sales-by-channel?start=${DEFAULT_START}&end=${DEFAULT_END}`)
+          const rows2 = res2.data.data || []
+          if (rows2.length > 0) {
+            rows.splice(0, rows.length, ...rows2)
+          }
+        }
         setRowsRaw(rows)
         setData({
           labels: rows.map(r => r.name),

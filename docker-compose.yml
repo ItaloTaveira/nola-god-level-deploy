@@ -71,6 +71,20 @@ services:
       postgres:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:8000"
+        VITE_DEFAULT_START: "2025-05-07"
+        VITE_DEFAULT_END: "2025-11-03"
+    container_name: godlevel-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
     driver: local
