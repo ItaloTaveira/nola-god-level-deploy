@@ -3,6 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
+    platform: linux/amd64
     container_name: godlevel-db
     environment:
       POSTGRES_DB: challenge_db
@@ -23,6 +24,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    platform: linux/amd64
     container_name: godlevel-data-gen
     depends_on:
       postgres:
@@ -41,6 +43,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
+    platform: linux/amd64
     container_name: godlevel-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@godlevel.com
@@ -57,6 +60,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    platform: linux/amd64
     container_name: godlevel-backend
     environment:
       DB_HOST: postgres
@@ -79,6 +83,7 @@ services:
         VITE_API_URL: "http://localhost:8000"
         VITE_DEFAULT_START: "2025-05-07"
         VITE_DEFAULT_END: "2025-11-03"
+    platform: linux/amd64
     container_name: godlevel-frontend
     ports:
       - "3000:80"
