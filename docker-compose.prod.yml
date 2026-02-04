@@ -16,6 +16,12 @@ services:
       PORT: ${PORT:-8000}
       # Prefer a managed database in production
       DATABASE_URL: ${DATABASE_URL}
+      # Fallback local DB (when using --profile db)
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-challenge}
+      DB_PASSWORD: ${DB_PASSWORD:-challenge_2024}
+      DB_NAME: ${DB_NAME:-challenge_db}
     ports:
       - "8000:8000"
     restart: unless-stopped
