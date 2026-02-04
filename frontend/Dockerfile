@@ -1,6 +1,6 @@
 ARG APP_DIR=.
 FROM node:20-alpine AS build
-ARG APP_DIR
+ARG APP_DIR=.
 WORKDIR /app
 
 # Instalando dependências usando package-lock / npm ci é mais determinístico
@@ -22,13 +22,13 @@ RUN npm run build
 
 # Fase final: servir com nginx (small, estável)
 FROM nginx:stable-alpine
-ARG APP_DIR
+ARG APP_DIR=.
 # Remove conteúdo default e copia build
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copia configuração para fallback de SPA (compatível com ambos contextos)
-COPY ${APP_DIR}/nginx.conf /etc/nginx/nginx.conf
+# Copia configuração para fallback de SPA (coloca em conf.d)
+COPY ${APP_DIR}/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

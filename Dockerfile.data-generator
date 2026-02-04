@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY backend/requirements.txt .
+# Copy requirements and install (apenas dependências do gerador)
+COPY requirements-generator.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy data generation script
