@@ -61,8 +61,7 @@ services:
       target: app
       args:
         VITE_API_URL: "http://localhost:8000"
-        VITE_DEFAULT_START: "2025-05-07"
-        VITE_DEFAULT_END: "2025-11-03"
+        # Deixe sem datas fixas para usar últimos 30 dias
     platform: linux/amd64
     container_name: godlevel-app
     environment:

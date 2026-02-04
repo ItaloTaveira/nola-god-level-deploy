@@ -379,44 +379,7 @@ As instruções de CI/CD e deploy para provedores de cloud foram removidas deste
 
 ---
 
-## Deploy (produção) com Docker Compose
-
-Este repositório inclui um `docker-compose.prod.yml` para empacotar e subir o app em produção. Você pode apontar para um banco gerenciado via `DATABASE_URL` ou (opcionalmente) usar um Postgres local habilitando o profile `db`.
-
-1. Crie o arquivo `.env.prod` baseado em `.env.prod.example` e configure ao menos `DATABASE_URL` (recomendado) e `VITE_API_URL`:
-
-```bash
-cp .env.prod.example .env.prod
-vi .env.prod  # edite as variáveis
-```
-
-2. Suba somente o app (usando DB gerenciado):
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build app
-docker compose -f docker-compose.prod.yml logs -f app
-```
-
-3. (Opcional) Se quiser Postgres no mesmo host, habilite o profile `db` e aponte o app para ele (o backend detecta `DATABASE_URL`; se ausente, usa `DB_*`):
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml --profile db up -d --build
-```
-
-Endpoints ficarão disponíveis em `http://<host>:8000` (padrão). Altere `PORT` no `.env.prod` conforme necessidade.
-
-Notas:
-
-- Em produção, prefira `DATABASE_URL` para um Postgres gerenciado. Não use `localhost` dentro de containers — use o hostname do serviço/host acessível.
-- O container respeita `$PORT` (útil para Cloud Run/Render). O frontend é servido pelo backend em `/` e a API em `/api/v1`.
-- Para popular dados em um ambiente de produção, execute o gerador apenas uma vez com a URL correta do banco:
-
-```bash
-docker compose --profile tools run --rm data-generator \
-  python generate_data.py --db-url "${DATABASE_URL}" --months 1 --customers 5000 --products 300 --items 100
-```
-
----
+<!-- Seção de deploy em produção removida para retornar ao estado anterior -->
 
 ---
 
