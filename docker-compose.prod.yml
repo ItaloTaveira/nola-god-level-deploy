@@ -1,3 +1,44 @@
-## docker-compose.prod.yml neutralized per maintainer request.
-# The production compose that referenced DigitalOcean images was removed.
-# Recreate a production compose if/when you are ready to target a registry.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+      args:
+        # Build-time API base URL for the SPA
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        # Optional default range for dashboards
+        VITE_DEFAULT_START: ${VITE_DEFAULT_START:-2025-05-07}
+        VITE_DEFAULT_END: ${VITE_DEFAULT_END:-2025-11-03}
+    image: nola-godlevel-app:prod
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-8000}
+      # Prefer a managed database in production
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # Optional self-hosted Postgres for small/self-managed deployments
+  postgres:
+    image: postgres:15
+    container_name: godlevel-db-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME:-challenge_db}
+      POSTGRES_USER: ${DB_USER:-challenge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-challenge_2024}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - db
+
+volumes:
+  postgres_prod_data:
+    driver: local
+

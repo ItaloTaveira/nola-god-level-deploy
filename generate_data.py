@@ -12,6 +12,7 @@ from decimal import Decimal
 import psycopg2
 from psycopg2.extras import execute_batch
 from faker import Faker
+from urllib.parse import urlparse, urlunparse
 
 fake = Faker('pt_BR')
 
@@ -74,6 +75,37 @@ COURIER_TYPES = ['PLATFORM', 'OWN', 'THIRD_PARTY']
 
 def get_db_connection(db_url):
     return psycopg2.connect(db_url)
+
+
+def _is_inside_docker():
+    try:
+        return os.path.exists('/.dockerenv')
+    except Exception:
+        return False
+
+
+def _remap_db_url_for_docker(db_url: str) -> str:
+    """If running inside Docker and host is localhost, remap host to 'postgres'."""
+    try:
+        parsed = urlparse(db_url)
+        host = parsed.hostname
+        if host in ("localhost", "127.0.0.1") and _is_inside_docker():
+            user = parsed.username or ""
+            password = parsed.password or ""
+            port = parsed.port or 5432
+            auth = ""
+            if user and password:
+                auth = f"{user}:{password}@"
+            elif user:
+                auth = f"{user}@"
+            netloc = f"{auth}postgres:{port}"
+            new_url = urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+            print("Info: Remapeando host do banco para 'postgres' (ambiente Docker).")
+            return new_url
+    except Exception:
+        # Fallback silently to original URL
+        pass
+    return db_url
 
 
 def get_hour_weight(hour):
@@ -681,7 +713,10 @@ def main():
     print("=" * 70)
     print(f"Generating {args.months} months of restaurant operational data...")
     print()
-    
+
+    # Ajuste de URL quando executado dentro de container
+    args.db_url = _remap_db_url_for_docker(args.db_url)
+
     conn = get_db_connection(args.db_url)
     
     try:
