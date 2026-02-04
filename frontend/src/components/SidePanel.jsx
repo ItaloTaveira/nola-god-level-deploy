@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { usePanel } from '../context/PanelContext'
+import API_BASE from '../lib/apiBase'
 
 export default function SidePanel() {
   const { open, payload, closePanel } = usePanel()
-  import API_BASE from '../lib/apiBase'
   const API = API_BASE
 
   const [deliveryData, setDeliveryData] = useState([])

@@ -37,8 +37,8 @@ COPY --from=frontend-build /app/dist/ ./backend/public/
 
 # Porta para Cloud Run ($PORT) e local
 ENV PORT=8000
-EXPOSE 8080
+EXPOSE 8000
 
-# Ajustar comando para respeitar $PORT (Cloud Run fornece PORT=8080)
+# Ajustar comando para respeitar $PORT (default 8000)
 WORKDIR /app/backend
-CMD ["sh", "-lc", "PORT=${PORT:-8080} node src/index.js"]
+CMD ["sh", "-lc", "PORT=${PORT:-8000} node src/index.js"]

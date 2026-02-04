@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import API_BASE from '../lib/apiBase'
 
 export default function CustomersLostPanel({ minOrders = 3, sinceDays = 30, limit = 50 }) {
-  import API_BASE from '../lib/apiBase'
   const API = API_BASE
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
