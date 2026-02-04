@@ -4,7 +4,8 @@ import { usePanel } from '../context/PanelContext'
 
 export default function SidePanel() {
   const { open, payload, closePanel } = usePanel()
-  const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  import API_BASE from '../lib/apiBase'
+  const API = API_BASE
 
   const [deliveryData, setDeliveryData] = useState([])
   const [ticketData, setTicketData] = useState([])

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { usePanel } from '../context/PanelContext'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import API_BASE from '../lib/apiBase'
+const API = API_BASE
 const DEFAULT_START = import.meta.env.VITE_DEFAULT_START
 const DEFAULT_END = import.meta.env.VITE_DEFAULT_END
 
