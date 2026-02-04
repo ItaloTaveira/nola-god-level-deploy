@@ -150,55 +150,42 @@ Observação: todas as respostas têm o formato `{ ok: true, data: ... }` em cas
 Endpoints (resumo):
 
 - GET /revenue?start=YYYY-MM-DD&end=YYYY-MM-DD
-
   - Total de receita no período.
 
 - GET /top-products?start=&end=&limit=
-
   - Lista dos produtos ordenados por receita; retorna `revenue`, `qty`, `revenue_fmt` (BRL) e `avg_price_fmt`.
 
 - GET /sales-by-channel?start=&end=
-
   - Receita/volume por canal.
 
 - GET /ticket-average?group=channel|store&start=&end=
-
   - Ticket médio agrupado por canal ou loja.
 
 - GET /delivery-times?start=&end=&channel_id=&store_id=
-
   - Estatísticas de tempos (preparo, entrega) filtráveis por canal/loja.
 
 - GET /top-products-when?start=&end=&channel_id=&dow=&hour_start=&hour_end=&limit=
-
   - Top produtos em dia da semana (`dow`: 0=domingo .. 6=sábado) e faixa horária.
 
 - GET /product-margins?start=&end=&limit=&assumed_cost_pct=&product_id=
-
   - Calcula margem de produtos; `assumed_cost_pct` é o custo percentual assumido quando não há custo real.
 
 - GET /product-customers?product_id=&start=&end=&min_orders=&limit=
-
   - Retorna clientes que compraram um produto, com filtro por número mínimo de pedidos.
 
 - GET /customer-summary?customer_id=&start=&end=&limit=
-
   - Histórico resumido de um cliente (por id).
 
 - GET /customer-summary-by-name?name=&start=&end=&limit=
-
   - Busca por nome (útil quando não se tem id do cliente).
 
 - GET /customer-last-order-by-name?name=
-
   - Último pedido de um cliente por nome.
 
 - GET /customers-lost?min_orders=&since_days=&limit=&fallback=
-
   - Identifica clientes considerados "lost" (p.ex. compraram >= `min_orders` mas não compram há `since_days`). Se `fallback=true` usa um algoritmo alternativo.
 
 - GET /channels
-
   - Lista de canais disponíveis (iFood, Rappi, balcão, etc.).
 
 - POST /decompose { group, a_start, a_end, b_start, b_end }
@@ -396,21 +383,21 @@ As instruções de CI/CD e deploy para provedores de cloud foram removidas deste
 
 Este repositório inclui um `docker-compose.prod.yml` para empacotar e subir o app em produção. Você pode apontar para um banco gerenciado via `DATABASE_URL` ou (opcionalmente) usar um Postgres local habilitando o profile `db`.
 
-1) Crie o arquivo `.env.prod` baseado em `.env.prod.example` e configure ao menos `DATABASE_URL` (recomendado) e `VITE_API_URL`:
+1. Crie o arquivo `.env.prod` baseado em `.env.prod.example` e configure ao menos `DATABASE_URL` (recomendado) e `VITE_API_URL`:
 
 ```bash
 cp .env.prod.example .env.prod
 vi .env.prod  # edite as variáveis
 ```
 
-2) Suba somente o app (usando DB gerenciado):
+2. Suba somente o app (usando DB gerenciado):
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build app
 docker compose -f docker-compose.prod.yml logs -f app
 ```
 
-3) (Opcional) Se quiser Postgres no mesmo host, habilite o profile `db` e aponte o app para ele (o backend detecta `DATABASE_URL`; se ausente, usa `DB_*`):
+3. (Opcional) Se quiser Postgres no mesmo host, habilite o profile `db` e aponte o app para ele (o backend detecta `DATABASE_URL`; se ausente, usa `DB_*`):
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml --profile db up -d --build
@@ -419,6 +406,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml --profile db up -
 Endpoints ficarão disponíveis em `http://<host>:8000` (padrão). Altere `PORT` no `.env.prod` conforme necessidade.
 
 Notas:
+
 - Em produção, prefira `DATABASE_URL` para um Postgres gerenciado. Não use `localhost` dentro de containers — use o hostname do serviço/host acessível.
 - O container respeita `$PORT` (útil para Cloud Run/Render). O frontend é servido pelo backend em `/` e a API em `/api/v1`.
 - Para popular dados em um ambiente de produção, execute o gerador apenas uma vez com a URL correta do banco:
