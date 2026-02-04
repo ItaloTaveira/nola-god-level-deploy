@@ -1,19 +1,14 @@
-FROM python:3.11-slim
+FROM node:20-slim
+
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
 
-# Copy requirements and install
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/package.json backend/package-lock.json* ./
+RUN npm install --production
 
-# Copy data generation script
-COPY generate_data.py .
+COPY backend/ ./
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
-
-
+EXPOSE 8000
+CMD ["npm", "start"]

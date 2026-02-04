@@ -23,7 +23,7 @@ services:
   data-generator:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.data-generator
     platform: linux/amd64
     container_name: godlevel-data-gen
     depends_on:
