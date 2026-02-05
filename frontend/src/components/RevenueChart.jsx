@@ -7,11 +7,13 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  Filler,
   Tooltip,
   Legend,
 } from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
+// Registro redundante do Filler aqui para garantir disponibilidade
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE
