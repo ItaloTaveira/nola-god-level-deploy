@@ -1,58 +1,58 @@
 services:
-  postgres:
-    image: postgres:15
-    platform: linux/amd64
-    container_name: godlevel-db
-    environment:
-      POSTGRES_DB: challenge_db
-      POSTGRES_USER: challenge
-      POSTGRES_PASSWORD: challenge_2024
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U challenge -d challenge_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # postgres:
+  #   image: postgres:15
+  #   platform: linux/amd64
+  #   container_name: godlevel-db
+  #   environment:
+  #     POSTGRES_DB: challenge_db
+  #     POSTGRES_USER: challenge
+  #     POSTGRES_PASSWORD: challenge_2024
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./db/init:/docker-entrypoint-initdb.d
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U challenge -d challenge_db"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
-  data-generator:
-    build:
-      context: .
-      dockerfile: Dockerfile.data-generator
-    platform: linux/amd64
-    container_name: godlevel-data-gen
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://challenge:challenge_2024@postgres:5432/challenge_db
-    command: >
-      sh -c "
-        echo 'Waiting for database to be ready...' &&
-        sleep 5 &&
-        echo 'Generating challenge data...' &&
-        python generate_data.py --db-url postgresql://challenge:challenge_2024@postgres:5432/challenge_db
-      "
-    profiles:
-      - tools
+  # data-generator:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.data-generator
+  #   platform: linux/amd64
+  #   container_name: godlevel-data-gen
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     DATABASE_URL: postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+  #   command: >
+  #     sh -c "
+  #       echo 'Waiting for database to be ready...' &&
+  #       sleep 5 &&
+  #       echo 'Generating challenge data...' &&
+  #       python generate_data.py --db-url postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+  #     "
+  #   profiles:
+  #     - tools
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    platform: linux/amd64
-    container_name: godlevel-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@godlevel.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    profiles:
-      - tools
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   platform: linux/amd64
+  #   container_name: godlevel-pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@godlevel.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
+  #   profiles:
+  #     - tools
 
   app:
     build:
@@ -77,7 +77,7 @@ services:
       postgres:
         condition: service_healthy
 
-volumes:
-  postgres_data:
-    driver: local
+# volumes:
+#   postgres_data:
+#     driver: local
 

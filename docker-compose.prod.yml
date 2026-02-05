@@ -1,4 +1,0 @@
-## docker-compose.prod.yml neutralized per maintainer request.
-# The production compose that referenced DigitalOcean images was removed.
-# Recreate a production compose if/when you are ready to target a registry.
-
