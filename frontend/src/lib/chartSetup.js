@@ -1,26 +1,4 @@
-import {
-	Chart as ChartJS,
-	CategoryScale,
-	LinearScale,
-	PointElement,
-	LineElement,
-	ArcElement,
-	Filler,
-	Tooltip,
-	Legend
-} from 'chart.js'
-
-// Registro único e central de elementos e plugins necessários
-ChartJS.register(
-	CategoryScale,
-	LinearScale,
-	PointElement,
-	LineElement,
-	ArcElement,
-	Filler,
-	Tooltip,
-	Legend
-)
+import ChartJS from 'chart.js/auto'
 
 // Garante que o plugin não esteja desabilitado globalmente
 if (!ChartJS.defaults.plugins) ChartJS.defaults.plugins = {}
