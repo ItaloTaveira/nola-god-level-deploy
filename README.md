@@ -150,42 +150,55 @@ Observação: todas as respostas têm o formato `{ ok: true, data: ... }` em cas
 Endpoints (resumo):
 
 - GET /revenue?start=YYYY-MM-DD&end=YYYY-MM-DD
+
   - Total de receita no período.
 
 - GET /top-products?start=&end=&limit=
+
   - Lista dos produtos ordenados por receita; retorna `revenue`, `qty`, `revenue_fmt` (BRL) e `avg_price_fmt`.
 
 - GET /sales-by-channel?start=&end=
+
   - Receita/volume por canal.
 
 - GET /ticket-average?group=channel|store&start=&end=
+
   - Ticket médio agrupado por canal ou loja.
 
 - GET /delivery-times?start=&end=&channel_id=&store_id=
+
   - Estatísticas de tempos (preparo, entrega) filtráveis por canal/loja.
 
 - GET /top-products-when?start=&end=&channel_id=&dow=&hour_start=&hour_end=&limit=
+
   - Top produtos em dia da semana (`dow`: 0=domingo .. 6=sábado) e faixa horária.
 
 - GET /product-margins?start=&end=&limit=&assumed_cost_pct=&product_id=
+
   - Calcula margem de produtos; `assumed_cost_pct` é o custo percentual assumido quando não há custo real.
 
 - GET /product-customers?product_id=&start=&end=&min_orders=&limit=
+
   - Retorna clientes que compraram um produto, com filtro por número mínimo de pedidos.
 
 - GET /customer-summary?customer_id=&start=&end=&limit=
+
   - Histórico resumido de um cliente (por id).
 
 - GET /customer-summary-by-name?name=&start=&end=&limit=
+
   - Busca por nome (útil quando não se tem id do cliente).
 
 - GET /customer-last-order-by-name?name=
+
   - Último pedido de um cliente por nome.
 
 - GET /customers-lost?min_orders=&since_days=&limit=&fallback=
+
   - Identifica clientes considerados "lost" (p.ex. compraram >= `min_orders` mas não compram há `since_days`). Se `fallback=true` usa um algoritmo alternativo.
 
 - GET /channels
+
   - Lista de canais disponíveis (iFood, Rappi, balcão, etc.).
 
 - POST /decompose { group, a_start, a_end, b_start, b_end }
@@ -376,10 +389,6 @@ Adicionei validações de entrada no layer de rota (express-validator) para evit
 ## Observação sobre deploy em cloud
 
 As instruções de CI/CD e deploy para provedores de cloud foram removidas deste repositório — o foco atual é execução e desenvolvimento local com Docker Compose. Se desejar reativar um fluxo de publicação ou integrar um registry, posso ajudá-lo a recriar os artefatos de CI/CD.
-
----
-
-<!-- Seção de deploy em produção removida para retornar ao estado anterior -->
 
 ---
 

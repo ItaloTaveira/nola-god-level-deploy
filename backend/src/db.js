@@ -1,13 +1,19 @@
 const { Pool } = require('pg');
 
-// Lazy pool: só cria conexão quando a primeira query for executada.
+// Support two modes:
+// 1) DATABASE_URL environment variable (typical in managed platforms like Render/Heroku)
+// 2) Individual DB_* variables for local/docker-compose setups
 let pool;
 
-function getPool() {
-  if (pool) return pool;
-
+// Create a Pool defensively. Some environments provide a DATABASE_URL that
+// may be malformed or require special handling; wrap in try/catch and fall
+// back to individual env vars when needed.
+function createPool() {
   if (process.env.DATABASE_URL) {
     try {
+      // When running in managed environments the connection often requires SSL.
+      // We set rejectUnauthorized to false to be tolerant of managed certs (Render, Heroku).
+      // If you want stricter validation, provide a proper CA and remove this option.
       pool = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false }
@@ -28,10 +34,15 @@ function getPool() {
     });
   }
 
-  return pool;
+  // Run a quick connection test and log detailed errors if it fails.
+  pool.query('SELECT 1').catch((err) => {
+    console.error('Initial DB connection test failed:', err && err.stack ? err.stack : err);
+  });
 }
 
+createPool();
+
 module.exports = {
-  query: (text, params) => getPool().query(text, params),
-  getPool
+  query: (text, params) => pool.query(text, params),
+  pool
 };

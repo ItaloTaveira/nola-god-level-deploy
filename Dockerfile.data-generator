@@ -13,5 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy data generation script
 COPY generate_data.py .
+COPY db/dumps/challenge_db_schema.sql ./schema.sql
 
 CMD ["python", "generate_data.py"]
