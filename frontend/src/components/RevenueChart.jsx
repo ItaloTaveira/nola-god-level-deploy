@@ -108,6 +108,46 @@ export default function RevenueChart({ interactive = true }) {
     }
   }
 
+  // Plugin leve para desenhar uma área com gradiente sob a linha (sem Filler)
+  const gradientFillPlugin = {
+    id: 'gradientFillPlugin',
+    beforeDatasetDraw(chart, args) {
+      try {
+        const { ctx, chartArea } = chart
+        if (!chartArea) return
+        // aplica apenas ao primeiro dataset
+        if (args.index !== 0) return
+        const meta = chart.getDatasetMeta(args.index)
+        const points = meta && meta.data
+        if (!points || points.length === 0) return
+
+        const first = points[0]
+        const last = points[points.length - 1]
+        if (!first || !last) return
+
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+        gradient.addColorStop(0, 'rgba(59,130,246,0.18)')
+        gradient.addColorStop(1, 'rgba(59,130,246,0)')
+
+        ctx.save()
+        ctx.fillStyle = gradient
+        ctx.beginPath()
+        ctx.moveTo(first.x, first.y)
+        for (let i = 1; i < points.length; i++) {
+          const p = points[i]
+          ctx.lineTo(p.x, p.y)
+        }
+        ctx.lineTo(last.x, chartArea.bottom)
+        ctx.lineTo(first.x, chartArea.bottom)
+        ctx.closePath()
+        ctx.fill()
+        ctx.restore()
+      } catch (e) {
+        // no-op
+      }
+    }
+  }
+
   if (loading) return <div className="text-sm text-slate-600">Carregando faturamento...</div>
   if (!data) return <div className="text-sm text-slate-600">Sem dados</div>
 
@@ -161,6 +201,7 @@ export default function RevenueChart({ interactive = true }) {
         <Line
           data={data}
           ref={chartRef}
+          plugins={[gradientFillPlugin]}
           options={{
             maintainAspectRatio: false,
             responsive: true,
