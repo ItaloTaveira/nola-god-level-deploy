@@ -339,8 +339,11 @@ def generate_customers(conn, num_customers=10000):
     return customer_ids
 
 
-def generate_sales(conn, stores, channels, products, items, option_groups, customers, months=6):
-    """Generate sales with realistic patterns"""
+def generate_sales(conn, stores, channels, products, items, option_groups, customers, months=6, daily_base=2700, stddev=400):
+    """Generate sales with realistic patterns
+    daily_base: média diária de vendas (reduzida para planos com pouco disco)
+    stddev: desvio padrão da distribuição normal
+    """
     print(f"Generating sales for {months} months...")
     
     cursor = conn.cursor()
@@ -367,7 +370,8 @@ def generate_sales(conn, stores, channels, products, items, option_groups, custo
         if current_date.date() == promo_day.date():
             day_mult *= 3.0
         
-        daily_sales = int(random.gauss(2700, 400) * day_mult)
+        daily_sales = int(random.gauss(daily_base, stddev) * day_mult)
+        daily_sales = max(0, daily_sales)
         
         sales_batch = []
         
@@ -705,6 +709,8 @@ def main():
     parser.add_argument('--items', type=int, default=200, help='Number of items/complements')
     parser.add_argument('--customers', type=int, default=10000, help='Number of customers')
     parser.add_argument('--months', type=int, default=6, help='Months of sales data')
+    parser.add_argument('--daily-base', type=int, default=400, help='Average daily sales (lower for small disks)')
+    parser.add_argument('--stddev', type=int, default=60, help='Stddev for daily sales distribution')
     
     args = parser.parse_args()
     
@@ -728,8 +734,9 @@ def main():
         customers = generate_customers(conn, args.customers)
         
         total_sales = generate_sales(
-            conn, stores, channels, products, items, 
-            option_groups, customers, args.months
+            conn, stores, channels, products, items,
+            option_groups, customers, args.months,
+            daily_base=args.daily_base, stddev=args.stddev
         )
         
         create_indexes(conn)
