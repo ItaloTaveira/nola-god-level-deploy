@@ -5,7 +5,6 @@
 generate_data.py
 Dockerfile.data-generator
 requirements-generator.txt
-backend/requirements.txt
 
 # Dependências e ruídos
 node_modules/
