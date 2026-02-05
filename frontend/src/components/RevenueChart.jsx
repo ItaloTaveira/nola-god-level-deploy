@@ -1,19 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { Line } from 'react-chartjs-2'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-
-// Registro redundante do Filler aqui para garantir disponibilidade
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+// Registro automático de todos os elementos/plugins do Chart.js
+import 'chart.js/auto'
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE

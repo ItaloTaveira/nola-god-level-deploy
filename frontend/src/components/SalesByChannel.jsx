@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Pie } from 'react-chartjs-2'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-ChartJS.register(ArcElement, Tooltip, Legend)
+// Registro automático de todos os elementos/plugins do Chart.js
+import 'chart.js/auto'
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE
