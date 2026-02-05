@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Pie } from 'react-chartjs-2'
+import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts'
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE
@@ -48,15 +48,7 @@ export default function SalesByChannel({ showDetailsPanel = false, interactive =
           }
         }
         setRowsRaw(rows)
-        setData({
-          labels: rows.map(r => r.name),
-          datasets: [
-            {
-              data: rows.map(r => r.sales),
-              backgroundColor: ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6']
-            }
-          ]
-        })
+        setData({ count: rows.length })
       } catch (err) {
         console.error(err)
         setFetchError(err.message || 'Erro ao carregar dados')
@@ -78,23 +70,32 @@ export default function SalesByChannel({ showDetailsPanel = false, interactive =
             <div className={`flex-1 bg-white p-3 rounded shadow ${showDetailsPanel ? '' : ''} h-full flex flex-col`}>
           <div className={showDetailsPanel ? 'flex-1 flex items-center justify-center min-h-[220px] md:min-h-[320px]' : 'flex-1 flex items-center justify-center min-h-[220px] md:min-h-[320px]'}>
             <div className="w-full h-full">
-              <Pie
-                data={data}
-                options={{
-                  maintainAspectRatio: false,
-                  responsive: true,
-                  plugins: { legend: { position: 'bottom' } }
-                }}
-                onClick={interactive ? (evt, elements) => {
-                  try {
-                    if (elements && elements.length > 0) {
-                      const idx = elements[0].index
-                      const row = rowsRaw[idx]
-                      window.__OPEN_PANEL && window.__OPEN_PANEL({ type: 'channel', data: row })
-                    }
-                  } catch (e) {}
-                } : undefined}
-              />
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={rowsRaw}
+                    dataKey="sales"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={Math.min(160, showDetailsPanel ? 140 : 160)}
+                    onClick={interactive ? (data, index) => {
+                      try {
+                        const row = rowsRaw[index]
+                        if (row) window.__OPEN_PANEL && window.__OPEN_PANEL({ type: 'channel', data: row })
+                      } catch (e) {}
+                    } : undefined}
+                  >
+                    {rowsRaw.map((entry, idx) => {
+                      const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6']
+                      const c = colors[idx % colors.length]
+                      return <Cell key={`cell-${idx}`} fill={c} />
+                    })}
+                  </Pie>
+                  <Legend verticalAlign="bottom" />
+                  <Tooltip formatter={(value, name, props) => [String(value), 'Vendas']} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

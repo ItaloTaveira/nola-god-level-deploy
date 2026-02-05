@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
-import { Line } from 'react-chartjs-2'
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE
@@ -85,21 +85,7 @@ export default function RevenueChart({ interactive = true }) {
 
       setSummary({ total, totalPrev, pct, days: rows.length || 0 })
 
-      setData({
-        labels: rows.map(r => r.day),
-        datasets: [
-          {
-            label: 'Faturamento (BRL)',
-            data: rows.map(r => r.revenue),
-            borderColor: '#3b82f6',
-            tension: 0.3,
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            borderWidth: 2,
-            fill: false
-          }
-        ]
-      })
+      setData({ count: rows.length })
       setRowsRaw(rows)
     } catch (err) {
       console.error(err)
@@ -108,44 +94,15 @@ export default function RevenueChart({ interactive = true }) {
     }
   }
 
-  // Plugin leve para desenhar uma área com gradiente sob a linha (sem Filler)
-  const gradientFillPlugin = {
-    id: 'gradientFillPlugin',
-    beforeDatasetDraw(chart, args) {
-      try {
-        const { ctx, chartArea } = chart
-        if (!chartArea) return
-        // aplica apenas ao primeiro dataset
-        if (args.index !== 0) return
-        const meta = chart.getDatasetMeta(args.index)
-        const points = meta && meta.data
-        if (!points || points.length === 0) return
-
-        const first = points[0]
-        const last = points[points.length - 1]
-        if (!first || !last) return
-
-        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-        gradient.addColorStop(0, 'rgba(59,130,246,0.18)')
-        gradient.addColorStop(1, 'rgba(59,130,246,0)')
-
-        ctx.save()
-        ctx.fillStyle = gradient
-        ctx.beginPath()
-        ctx.moveTo(first.x, first.y)
-        for (let i = 1; i < points.length; i++) {
-          const p = points[i]
-          ctx.lineTo(p.x, p.y)
-        }
-        ctx.lineTo(last.x, chartArea.bottom)
-        ctx.lineTo(first.x, chartArea.bottom)
-        ctx.closePath()
-        ctx.fill()
-        ctx.restore()
-      } catch (e) {
-        // no-op
+  // Handler para clique em um ponto usando índice do tooltip ativo
+  const handleChartClick = (state) => {
+    try {
+      const idx = state && state.activeTooltipIndex
+      if (idx != null && rowsRaw[idx]) {
+        const row = rowsRaw[idx]
+        window.__OPEN_PANEL && window.__OPEN_PANEL({ type: 'day', data: row })
       }
-    }
+    } catch (e) {}
   }
 
   if (loading) return <div className="text-sm text-slate-600">Carregando faturamento...</div>
@@ -198,72 +155,24 @@ export default function RevenueChart({ interactive = true }) {
         )}
       </div>
       <div className="h-56 md:h-72">
-        <Line
-          data={data}
-          ref={chartRef}
-          plugins={[gradientFillPlugin]}
-          options={{
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  title: (items) => {
-                    // show human friendly date
-                    if (!items || !items.length) return ''
-                    const idx = items[0].dataIndex
-                    const label = data.labels[idx]
-                    return new Date(label).toLocaleDateString('pt-BR')
-                  },
-                  label: (context) => {
-                    const v = context.parsed.y
-                    return `Faturamento: ${currency.format(v)}`
-                  }
-                }
-              },
-              legend: { display: false }
-            },
-            scales: {
-              x: {
-                ticks: {
-                  // Chart.js may pass either the label string or a numeric index depending on scale setup.
-                  // Normalize: if value is a number, try to get the label from data.labels; otherwise format directly.
-                  callback: (value, index) => {
-                    try {
-                      const raw = (typeof value === 'number') ? (data && data.labels && data.labels[value]) : value
-                      if (!raw) return ''
-                      const d = new Date(raw)
-                      if (isNaN(d.getTime())) return String(raw)
-                      return d.toLocaleDateString('pt-BR')
-                    } catch (e) {
-                      return String(value)
-                    }
-                  }
-                }
-              },
-              y: {
-                ticks: {
-                  callback: (value) => currency.format(value)
-                }
-              }
-            }
-          }}
-          onClick={(evt, elements) => {
-            try {
-              if (elements && elements.length > 0) {
-                const idx = elements[0].index
-                const row = rowsRaw[idx]
-                // import hook dynamically to avoid SSR issues
-                const { usePanel } = require('../context/PanelContext')
-                const panel = require('../context/PanelContext')
-                // This is a workaround: call openPanel through a small event on window
-                window.__OPEN_PANEL && window.__OPEN_PANEL({ type: 'day', data: row })
-              }
-            } catch (e) {
-              // no-op
-            }
-          }}
-        />
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={rowsRaw} onClick={handleChartClick}>
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.18} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="day" tickFormatter={(value) => {
+              try { const d = new Date(value); return isNaN(d.getTime()) ? String(value) : d.toLocaleDateString('pt-BR') } catch { return String(value) }
+            }} />
+            <YAxis tickFormatter={(v) => currency.format(v)} />
+            <Tooltip labelFormatter={(label) => {
+              try { const d = new Date(label); return isNaN(d.getTime()) ? String(label) : d.toLocaleDateString('pt-BR') } catch { return String(label) }
+            }} formatter={(value) => [`${currency.format(value)}`, 'Faturamento']} />
+            <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="url(#colorRevenue)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 5 }} />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )
