@@ -96,16 +96,7 @@ export default function RevenueChart({ interactive = true }) {
             pointRadius: 2,
             pointHoverRadius: 5,
             borderWidth: 2,
-            fill: true,
-            backgroundColor: (context) => {
-              const chart = context.chart
-              const { ctx, chartArea } = chart
-              if (!chartArea) return 'rgba(59,130,246,0.15)'
-              const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-              gradient.addColorStop(0, 'rgba(59,130,246,0.18)')
-              gradient.addColorStop(1, 'rgba(59,130,246,0)')
-              return gradient
-            }
+            fill: false
           }
         ]
       })
@@ -174,7 +165,6 @@ export default function RevenueChart({ interactive = true }) {
             maintainAspectRatio: false,
             responsive: true,
             plugins: {
-              filler: { propagate: false },
               tooltip: {
                 callbacks: {
                   title: (items) => {
