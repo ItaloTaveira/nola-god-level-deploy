@@ -1,0 +1,14 @@
+# Excluir arquivos que não fazem parte do app web (frontend + backend)
+# Evita que detectores de runtime tentem rodar Python dentro da imagem do app
+
+# Gerador de dados (imagem separada)
+generate_data.py
+Dockerfile.data-generator
+requirements-generator.txt
+
+# Dependências e ruídos
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+logs/
+.git/
