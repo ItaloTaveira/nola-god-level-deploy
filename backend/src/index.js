@@ -24,6 +24,7 @@ app.get('/openapi.json', (req, res) => {
 
 // Serve frontend static files (built into ../public by the Dockerfile)
 const path = require('path');
+const fs = require('fs');
 const publicPath = path.join(__dirname, '..', 'public');
 app.use(express.static(publicPath));
 
@@ -38,6 +39,24 @@ app.use(errorHandler);
 
 const port = process.env.PORT || 8000;
 if (require.main === module) {
+  const indexExists = fs.existsSync(path.join(publicPath, 'index.html'));
+  let assetsInfo = '';
+  try {
+    const assetsDir = path.join(publicPath, 'assets');
+    if (fs.existsSync(assetsDir)) {
+      const files = fs.readdirSync(assetsDir);
+      assetsInfo = `assets: ${files.length} files`;
+    } else {
+      assetsInfo = 'assets: directory missing';
+    }
+  } catch (e) {
+    assetsInfo = `assets: check failed (${e && e.message ? e.message : 'error'})`;
+  }
+
+  console.log(`Static public path: ${publicPath}`);
+  console.log(`index.html present: ${indexExists}`);
+  console.log(assetsInfo);
+
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });

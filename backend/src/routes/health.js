@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+// Lightweight ping that doesn't touch the database
+router.get('/ping', (req, res) => {
+  res.json({ ok: true, service: 'up' });
+});
+
 router.get('/', async (req, res) => {
   try {
     // quick DB check
