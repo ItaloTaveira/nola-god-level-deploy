@@ -187,6 +187,7 @@ export default function RevenueChart({ interactive = true }) {
             maintainAspectRatio: false,
             responsive: true,
             plugins: {
+              filler: { propagate: false },
               tooltip: {
                 callbacks: {
                   title: (items) => {
