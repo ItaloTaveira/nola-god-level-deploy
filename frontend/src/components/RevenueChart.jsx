@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { Line } from 'react-chartjs-2'
-// Registro automático de todos os elementos/plugins do Chart.js
-import 'chart.js/auto'
 
 import API_BASE from '../lib/apiBase'
 const API = API_BASE

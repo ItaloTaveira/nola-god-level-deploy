@@ -1,6 +1,26 @@
-// Garante que todos os elementos/plugins estejam registrados (incluindo Filler)
-import 'chart.js/auto'
-import { Chart as ChartJS } from 'chart.js'
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	ArcElement,
+	Filler,
+	Tooltip,
+	Legend
+} from 'chart.js'
+
+// Registro único e central de elementos e plugins necessários
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	ArcElement,
+	Filler,
+	Tooltip,
+	Legend
+)
 
 // Garante que o plugin não esteja desabilitado globalmente
 if (!ChartJS.defaults.plugins) ChartJS.defaults.plugins = {}
