@@ -12,7 +12,8 @@ from decimal import Decimal
 import psycopg2
 from psycopg2.extras import execute_batch
 from faker import Faker
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+import time
 
 fake = Faker('pt_BR')
 
@@ -104,6 +105,45 @@ def _remap_db_url_for_docker(db_url: str) -> str:
             return new_url
     except Exception:
         # Fallback silently to original URL
+        pass
+    return db_url
+
+
+def _build_db_url_from_pg_env() -> str:
+    """Construct DATABASE_URL from PG* env vars if DATABASE_URL is missing."""
+    host = os.environ.get('PGHOST')
+    db = os.environ.get('PGDATABASE')
+    user = os.environ.get('PGUSER')
+    password = os.environ.get('PGPASSWORD')
+    port = os.environ.get('PGPORT', '5432')
+    if host and db and user:
+        auth = f"{user}:{password}@" if password else f"{user}@"
+        return f"postgresql://{auth}{host}:{port}/{db}"
+    return ''
+
+
+def _ensure_sslmode(db_url: str) -> str:
+    """Ensure sslmode=require for managed providers like Railway when not provided."""
+    try:
+        parsed = urlparse(db_url)
+        q = parse_qs(parsed.query)
+        if 'sslmode' not in q:
+            q['sslmode'] = ['require']
+            new_query = urlencode({k: v[0] for k, v in q.items()})
+            return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+    except Exception:
+        pass
+    return db_url
+
+
+def _mask_url_for_log(db_url: str) -> str:
+    try:
+        parsed = urlparse(db_url)
+        password = parsed.password
+        if password:
+            netloc = parsed.netloc.replace(f":{password}@", ":******@")
+            return urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+    except Exception:
         pass
     return db_url
 
@@ -339,7 +379,7 @@ def generate_customers(conn, num_customers=10000):
     return customer_ids
 
 
-def generate_sales(conn, stores, channels, products, items, option_groups, customers, months=6, daily_base=2700, stddev=400):
+def generate_sales(conn, stores, channels, products, items, option_groups, customers, months=6, daily_base=2700, stddev=400, batch_size=200):
     """Generate sales with realistic patterns
     daily_base: média diária de vendas (reduzida para planos com pouco disco)
     stddev: desvio padrão da distribuição normal
@@ -356,7 +396,6 @@ def generate_sales(conn, stores, channels, products, items, option_groups, custo
     
     current_date = start_date
     total_sales = 0
-    batch_size = 500
     
     while current_date <= end_date:
         weekday = current_date.weekday()
@@ -711,6 +750,7 @@ def main():
     parser.add_argument('--months', type=int, default=6, help='Months of sales data')
     parser.add_argument('--daily-base', type=int, default=400, help='Average daily sales (lower for small disks)')
     parser.add_argument('--stddev', type=int, default=60, help='Stddev for daily sales distribution')
+    parser.add_argument('--batch-size', type=int, default=100, help='Insert batch size to reduce WAL pressure')
     
     args = parser.parse_args()
     
@@ -720,10 +760,26 @@ def main():
     print(f"Generating {args.months} months of restaurant operational data...")
     print()
 
-    # Ajuste de URL quando executado dentro de container
+    # Resolver URL do banco: env DATABASE_URL, fallback PG* env, ajuste docker e SSL
+    if not args.db_url:
+        args.db_url = _build_db_url_from_pg_env()
     args.db_url = _remap_db_url_for_docker(args.db_url)
+    args.db_url = _ensure_sslmode(args.db_url)
 
-    conn = get_db_connection(args.db_url)
+    # Log amigável (sem senha)
+    print(f"Connecting to database: {_mask_url_for_log(args.db_url)}")
+
+    # Tentativa com pequenos retries (serviços gerenciados podem demorar a aceitar)
+    conn = None
+    for attempt in range(1, 4):
+        try:
+            conn = get_db_connection(args.db_url)
+            break
+        except Exception as e:
+            print(f"Connection attempt {attempt} failed: {e}")
+            time.sleep(2 * attempt)
+    if conn is None:
+        raise RuntimeError("Could not connect to database after retries. Check DATABASE_URL/PG* env and SSL.")
     
     try:
         sub_brand_ids, channels = setup_base_data(conn)
@@ -736,7 +792,7 @@ def main():
         total_sales = generate_sales(
             conn, stores, channels, products, items,
             option_groups, customers, args.months,
-            daily_base=args.daily_base, stddev=args.stddev
+            daily_base=args.daily_base, stddev=args.stddev, batch_size=args.batch_size
         )
         
         create_indexes(conn)
