@@ -1,4 +1,8 @@
 import ChartJS from 'chart.js/auto'
+import { Filler } from 'chart.js'
+
+// Registro explícito do Filler para garantir ativação
+try { ChartJS.register(Filler) } catch {}
 
 // Garante que o plugin não esteja desabilitado globalmente
 if (!ChartJS.defaults.plugins) ChartJS.defaults.plugins = {}
