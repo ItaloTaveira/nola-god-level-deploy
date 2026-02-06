@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import {Filler} from 'chart.js'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
