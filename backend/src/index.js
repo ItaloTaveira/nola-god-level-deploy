@@ -26,7 +26,12 @@ app.get('/openapi.json', (req, res) => {
 const path = require('path');
 const fs = require('fs');
 const publicPath = path.join(__dirname, '..', 'public');
-app.use(express.static(publicPath));
+// Desabilita cache para evitar servir bundles antigos no navegador
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+app.use(express.static(publicPath, { etag: false, lastModified: false, cacheControl: false }));
 
 // SPA fallback: for any non-API route, serve index.html
 app.get('*', (req, res, next) => {
