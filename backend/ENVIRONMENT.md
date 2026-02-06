@@ -7,6 +7,7 @@ O backend agora suporta múltivas formas de configurar a conexão com Postgres:
 - Em `DATABASE_URL`/`DATABASE_PUBLIC_URL` é aplicado `ssl: { rejectUnauthorized: false }`. No modo por parâmetros (`host`, `port`, etc.) SSL não é aplicado por padrão.
 
 ## Suportadas
+
 - `DATABASE_URL`
 - `DATABASE_PUBLIC_URL`
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
@@ -14,18 +15,21 @@ O backend agora suporta múltivas formas de configurar a conexão com Postgres:
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 
 Não utilizadas pelo backend:
+
 - `PGDATA`, `RAILWAY_DEPLOYMENT_DRAINING_SECONDS`, `SSL_CERT_DAYS`
 
 ## Exemplos de .env
 
 ### Usando URL (Railway/Render/Heroku)
+
 ```
 DATABASE_URL=postgres://user:pass@host:5432/dbname?sslmode=require
 # ou
 DATABASE_PUBLIC_URL=postgres://user:pass@host:5432/dbname
 ```
 
-### Usando parâmetros (local/Docker Compose/Railway PG*)
+### Usando parâmetros (local/Docker Compose/Railway PG\*)
+
 ```
 # DB_*
 DB_HOST=localhost
