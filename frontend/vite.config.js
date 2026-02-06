@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite'
 
-// Unificar qualquer import de 'chart.js' para 'chart.js/auto' e evitar múltiplas instâncias
+// Deduplica chart.js para evitar múltiplas instâncias no bundle
 export default defineConfig({
   resolve: {
-    alias: {
-      'chart.js': 'chart.js/auto'
-    }
+    dedupe: ['chart.js', 'chart.js/auto']
   },
   optimizeDeps: {
     include: ['chart.js/auto']
