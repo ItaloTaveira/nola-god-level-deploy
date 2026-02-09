@@ -15,7 +15,7 @@ export default function RevenuePage() {
         </div>
 
         <aside className="lg:col-span-1">
-          <CustomersLostPanel minOrders={3} sinceDays={30} limit={50} />
+          <CustomersLostPanel minOrders={3} sinceDays={90} limit={50} />
         </aside>
       </main>
     </div>
