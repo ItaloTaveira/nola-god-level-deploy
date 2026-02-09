@@ -15,7 +15,7 @@ export default function CustomersLostPanel({ minOrders = 3, sinceDays = 30, limi
     const fetch = async () => {
       setLoading(true); setError(null)
       try {
-  const params = new URLSearchParams({ min_orders: String(minOrders), since_days: String(sinceDays), limit: String(limit), fallback: 'true' })
+  const params = new URLSearchParams({ min_orders: String(minOrders), since_days: String(sinceDays), limit: String(limit), fallback: 'false' })
   const res = await axios.get(`${API}/api/v1/metrics/customers-lost?${params.toString()}`)
         if (!mounted) return
         setItems(res.data && res.data.data ? res.data.data : [])
